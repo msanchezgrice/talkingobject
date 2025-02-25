@@ -35,21 +35,21 @@ export default async function DashboardPage() {
         <h2 className="text-2xl font-bold">Your Agents</h2>
         <Link 
           href="/dashboard/create" 
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+          className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
         >
           Create New Agent
         </Link>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+        <div className="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded mb-4" role="alert">
           Error loading agents: {error}
         </div>
       )}
 
       {agents.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <p className="text-center text-gray-500 py-8">
+        <div className="bg-gray-900 rounded-lg shadow p-6 mb-8 border border-gray-800">
+          <p className="text-center text-gray-400 py-8">
             You haven&apos;t created any agents yet. Click the &quot;Create New Agent&quot; button to get started!
           </p>
         </div>
