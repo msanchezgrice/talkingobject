@@ -49,13 +49,13 @@ export default function ProfileButton() {
   };
 
   if (loading) {
-    return <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse"></div>;
+    return <div className="h-8 w-8 rounded-full bg-gray-700 animate-pulse"></div>;
   }
 
   if (!user) {
     return (
       <div className="flex gap-4">
-        <Link href="/login" className="hover:underline">
+        <Link href="/login" className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition-colors">
           Login
         </Link>
       </div>
@@ -75,24 +75,24 @@ export default function ProfileButton() {
       </button>
 
       {menuOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border">
+        <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-800 rounded-md shadow-lg py-1 z-10">
           <Link 
             href="/profile" 
-            className="block px-4 py-2 text-sm hover:bg-gray-100"
+            className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white"
             onClick={() => setMenuOpen(false)}
           >
             Your Profile
           </Link>
           <Link 
             href="/dashboard" 
-            className="block px-4 py-2 text-sm hover:bg-gray-100"
+            className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white"
             onClick={() => setMenuOpen(false)}
           >
             Dashboard
           </Link>
           <button 
             onClick={handleLogout}
-            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+            className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white"
           >
             Logout
           </button>
