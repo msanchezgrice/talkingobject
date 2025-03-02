@@ -94,7 +94,7 @@ export default function ProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* No agents yet message */}
                 <div className="bg-gray-800 p-4 rounded-lg text-center">
-                  <p className="text-gray-400">You haven't created any agents yet.</p>
+                  <p className="text-gray-400">You haven&apos;t created any agents yet.</p>
                   <Link href="/dashboard/create" className="text-blue-400 hover:text-blue-300 mt-2 inline-block">
                     Create your first agent
                   </Link>
