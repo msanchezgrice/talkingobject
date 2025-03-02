@@ -33,9 +33,18 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  // Skip prerendering of not-found pages
+  // Configuration to prevent URL-related issues during build
   skipTrailingSlashRedirect: true,
   skipMiddlewareUrlNormalize: true,
+  // Use standalone output for better server-side handling
+  output: "standalone",
+  // Disable prerendering to ensure not-found is generated at runtime
+  experimental: {
+    disableOptimizedLoading: true,
+    serverActions: {
+      bodySizeLimit: '2mb'
+    }
+  }
 };
 
 export default nextConfig;
