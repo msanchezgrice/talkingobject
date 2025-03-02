@@ -9,15 +9,16 @@ export const size = {
   height: 630,
 };
 
-interface PageProps {
-  params: {
-    slug: string;
-  };
-  searchParams: Record<string, string | string[] | undefined>;
-}
+type AgentPageParams = {
+  slug: string;
+};
 
 // Image generation
-export default async function Image({ params }: PageProps) {
+export default async function Image({ 
+  params 
+}: { 
+  params: AgentPageParams 
+}) {
   const slug = params.slug;
   const agent = getAgentBySlug(slug);
   
