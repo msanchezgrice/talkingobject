@@ -33,11 +33,15 @@ const MapComponent: React.FC<MapComponentProps> = ({
     // Fix for default marker icons in React-Leaflet
     // This is a workaround for the missing marker issue in react-leaflet
     delete (Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
-    Icon.Default.mergeOptions({
-      iconRetinaUrl: '/images/marker-icon-2x.png',
-      iconUrl: '/images/marker-icon.png',
-      shadowUrl: '/images/marker-shadow.png',
-    });
+    try {
+      Icon.Default.mergeOptions({
+        iconRetinaUrl: '/images/marker-icon-2x.png',
+        iconUrl: '/images/marker-icon.png',
+        shadowUrl: '/images/marker-shadow.png',
+      });
+    } catch (error) {
+      console.warn('Error setting map icons:', error);
+    }
   }, []);
 
   // Customize the marker icon
