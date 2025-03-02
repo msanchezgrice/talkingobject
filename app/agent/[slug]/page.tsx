@@ -1,11 +1,7 @@
-'use client';
-
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAgentBySlug } from '@/lib/placeholder-agents';
-import ChatInterface from '@/components/agent/ChatInterface';
-import AgentInfo from '@/components/agent/AgentInfo';
-import AgentTweets from '@/components/agent/AgentTweets';
+import ClientAgentPage from './ClientAgentPage';
 
 // Generate dynamic metadata for each agent
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata | undefined> {
@@ -47,19 +43,5 @@ export default function AgentPage({ params }: { params: { slug: string } }) {
     return notFound();
   }
 
-  return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="w-full lg:w-1/3">
-          <AgentInfo agent={agent} />
-          <div className="mt-8">
-            <AgentTweets agent={agent} />
-          </div>
-        </div>
-        <div className="w-full lg:w-2/3">
-          <ChatInterface agent={agent} />
-        </div>
-      </div>
-    </div>
-  );
+  return <ClientAgentPage agent={agent} />;
 } 
