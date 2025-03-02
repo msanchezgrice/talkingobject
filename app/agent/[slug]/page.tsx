@@ -3,14 +3,14 @@ import { notFound } from 'next/navigation';
 import { getAgentBySlug } from '@/lib/placeholder-agents';
 import ClientAgentPage from './ClientAgentPage';
 
-type PageParams = {
+interface PageProps {
   params: {
     slug: string;
   };
-};
+}
 
 // Generate dynamic metadata for each agent
-export async function generateMetadata({ params }: PageParams): Promise<Metadata | undefined> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata | undefined> {
   // Get the agent
   const slug = params.slug;
   const agent = getAgentBySlug(slug);
@@ -41,8 +41,8 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   };
 }
 
-// Update the page component to match Next.js 15 expectations
-export default function AgentPage({ params }: PageParams) {
+// Use the proper Next.js 15 page props interface
+export default async function AgentPage({ params }: PageProps) {
   const slug = params.slug;
   const agent = getAgentBySlug(slug);
   

@@ -9,14 +9,15 @@ export const size = {
   height: 630,
 };
 
-type PageParams = {
+interface PageProps {
   params: {
     slug: string;
   };
-};
+  searchParams: Record<string, string | string[] | undefined>;
+}
 
 // Image generation
-export default async function Image({ params }: PageParams) {
+export default async function Image({ params }: PageProps) {
   const slug = params.slug;
   const agent = getAgentBySlug(slug);
   
