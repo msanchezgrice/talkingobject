@@ -2,8 +2,6 @@
 const nextConfig = {
   // Basic configuration
   reactStrictMode: false,
-  // Switch to serverless rendering
-  output: 'standalone',
   // Image domains configuration
   images: {
     domains: [
@@ -31,12 +29,7 @@ const nextConfig = {
   },
   // Override page extensions to search for .jsx first
   pageExtensions: ['jsx', 'js', 'tsx', 'ts'],
-  // Handle errors gracefully
-  onDemandEntries: {
-    maxInactiveAge: 25 * 1000,
-    pagesBufferLength: 2,
-  },
-  // Disable optimizations that might cause errors
+  // Simple experimental settings
   experimental: {
     optimizeCss: false,
   }

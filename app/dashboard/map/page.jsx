@@ -1,16 +1,37 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
 
-export default function MapPage() {
-  const [isClient, setIsClient] = useState(false);
-
-  // Only render map components on the client side
-  useEffect(() => {
-    setIsClient(true);
+// This special approach uses a Client Component wrapper that only renders its children on the client
+const ClientOnly = ({ children }) => {
+  const [hasMounted, setHasMounted] = React.useState(false);
+  
+  React.useEffect(() => {
+    setHasMounted(true);
   }, []);
+  
+  if (!hasMounted) {
+    return (
+      <div style={{
+        background: '#111',
+        borderRadius: '8px',
+        padding: '40px',
+        textAlign: 'center',
+        height: '400px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <p>Loading map interface...</p>
+      </div>
+    );
+  }
+  
+  return children;
+};
 
+export default function MapPage() {
   return (
     <div style={{
       fontFamily: 'system-ui, sans-serif',
@@ -44,16 +65,7 @@ export default function MapPage() {
           </Link>
         </div>
 
-        {!isClient ? (
-          <div style={{
-            background: '#111',
-            borderRadius: '8px',
-            padding: '40px',
-            textAlign: 'center'
-          }}>
-            <p>Loading map interface...</p>
-          </div>
-        ) : (
+        <ClientOnly>
           <div style={{
             background: '#111',
             borderRadius: '8px',
@@ -61,7 +73,7 @@ export default function MapPage() {
             textAlign: 'center'
           }}>
             <h2 style={{ marginBottom: '20px' }}>Map Interface</h2>
-            <p>
+            <p style={{ marginBottom: '30px' }}>
               The interactive map will be available after resolving Leaflet integration issues.
               Maps require client-side rendering to function properly.
             </p>
@@ -81,7 +93,7 @@ export default function MapPage() {
               </Link>
             </div>
           </div>
-        )}
+        </ClientOnly>
       </div>
     </div>
   );
