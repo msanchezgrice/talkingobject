@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useLeafletComponents } from '@/lib/useMapComponent';
-import type { LeafletMouseEvent } from 'leaflet';
+import type { LeafletMouseEvent, Map as LeafletMap, DragEndEvent, Marker } from 'leaflet';
 
 // Component props
 interface LocationPickerProps {
@@ -24,7 +24,7 @@ const LocationPicker = ({
     initialLatitude || 30.2672, 
     initialLongitude || -97.7431
   ]);
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
   
   // Use our custom hook to get Leaflet components
   const { isLoaded, components } = useLeafletComponents();
@@ -55,8 +55,8 @@ const LocationPicker = ({
   }, [isLoaded, components, mapRef, onLocationSelected]);
 
   // Handle marker drag end events
-  const handleMarkerDragEnd = (e: any) => {
-    const marker = e.target;
+  const handleMarkerDragEnd = (e: DragEndEvent) => {
+    const marker = e.target as Marker;
     const position = marker.getLatLng();
     setPosition([position.lat, position.lng]);
     onLocationSelected(position.lat, position.lng);
@@ -92,9 +92,10 @@ const LocationPicker = ({
           center={position}
           zoom={13}
           style={{ height: '100%', width: '100%' }}
-          ref={mapRef}
-          whenCreated={(map: any) => {
-            mapRef.current = map;
+          ref={(map) => {
+            if (map && !mapRef.current) {
+              mapRef.current = map;
+            }
           }}
         >
           <TileLayer
