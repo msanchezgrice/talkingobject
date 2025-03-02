@@ -7,8 +7,7 @@ const nextConfig = {
   },
   // Update experimental options to handle the window not defined error
   experimental: {
-    // This will prevent prerendering pages with dynamic map components
-    appDir: true,
+    // Remove the appDir option as it's unrecognized in Next.js 15.1.4
   },
   // Environment configuration
   env: {

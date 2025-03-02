@@ -1,14 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import type { Icon } from 'leaflet';
+import type { MapContainer as MapContainerType, TileLayer as TileLayerType, Marker as MarkerType, Popup as PopupType } from 'react-leaflet';
 
+// Define proper types for Leaflet components
 interface LeafletComponents {
-  MapContainer: any;
-  TileLayer: any;
-  Marker: any;
-  Popup: any;
-  leaflet: any;
-  customIcon: any;
+  MapContainer: typeof MapContainerType;
+  TileLayer: typeof TileLayerType;
+  Marker: typeof MarkerType;
+  Popup: typeof PopupType;
+  leaflet: {
+    Icon: typeof Icon;
+    [key: string]: unknown;
+  };
+  customIcon: Icon;
 }
 
 /**
@@ -35,7 +41,8 @@ export function useLeafletComponents(): {
         ]);
 
         // Fix default icon issues in Leaflet
-        delete (leaflet.Icon.Default.prototype as any)._getIconUrl;
+        // Use type assertion with more specific type
+        delete (leaflet.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
         leaflet.Icon.Default.mergeOptions({
           iconRetinaUrl: '/images/marker-icon-2x.png',
           iconUrl: '/images/marker-icon.png',
@@ -52,7 +59,7 @@ export function useLeafletComponents(): {
           shadowSize: [41, 41],
         });
 
-        // Set components
+        // Set components with proper types
         setComponents({
           MapContainer: reactLeaflet.MapContainer,
           TileLayer: reactLeaflet.TileLayer,
