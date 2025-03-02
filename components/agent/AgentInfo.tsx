@@ -11,12 +11,8 @@ type AgentInfoProps = {
 export default function AgentInfo({ agent }: AgentInfoProps) {
   const [copySuccess, setCopySuccess] = useState('');
   
-  // Use fallback for BASE_URL if environment variable is not available
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://talkingobjects.vercel.app';
-  const agentUrl = `${baseUrl}/agent/${agent.slug}`;
-  
-  // Generate a static QR code URL to avoid issues during build
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(agentUrl)}&size=200x200&format=png`;
+  const agentUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/agent/${agent.slug}`;
+  const qrUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/qrcode?data=${encodeURIComponent(agentUrl)}&format=png&scale=8`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(agentUrl)

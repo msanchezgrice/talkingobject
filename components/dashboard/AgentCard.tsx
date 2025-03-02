@@ -14,12 +14,8 @@ type AgentCardProps = {
 export default function AgentCard({ agent }: AgentCardProps) {
   const [showQR, setShowQR] = useState(false);
   
-  // Use fallback for BASE_URL if environment variable is not available
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://talkingobjects.vercel.app';
-  const agentUrl = `${baseUrl}/agent/${agent.slug}`;
-  
-  // Generate a static QR code URL to avoid issues during build
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(agentUrl)}&size=200x200`;
+  const agentUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/agent/${agent.slug}`;
+  const qrUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/qrcode?data=${encodeURIComponent(agentUrl)}&format=png`;
   
   return (
     <div className="bg-gray-900 rounded-lg shadow overflow-hidden border border-gray-800">

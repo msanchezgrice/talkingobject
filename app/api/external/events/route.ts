@@ -95,7 +95,4 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
-}
-
-// Mark as dynamic for static export
-export const dynamic = 'force-dynamic'; 
+} 

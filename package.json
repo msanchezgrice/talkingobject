@@ -2,13 +2,14 @@
   "name": "talking-objects",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "setup-db": "node scripts/run-sql-setup.js",
+    "setup-db": "node setup-supabase.js",
     "analyze": "ANALYZE=true next build",
     "download-assets": "bash download-images.sh && bash download-map-assets.sh",
     "postinstall": "chmod +x download-images.sh download-map-assets.sh && npm run download-assets"

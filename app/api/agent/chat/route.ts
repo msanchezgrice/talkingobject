@@ -272,7 +272,4 @@ async function fetchExternalData(agent: Agent): Promise<string> {
     console.error('Error in fetchExternalData:', error);
     return 'External data temporarily unavailable.';
   }
-}
-
-// Mark as dynamic for static export
-export const dynamic = 'force-dynamic'; 
+} 

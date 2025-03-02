@@ -85,7 +85,7 @@ A comprehensive UI test checklist is available in `ui-test-checklist.md`.
 
 ## Deployment
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions on deploying to Vercel.
+See [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) for detailed instructions on deploying to Vercel.
 
 ## Development Workflow
 
