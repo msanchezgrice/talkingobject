@@ -1,30 +1,29 @@
-import React from 'react';
-import Link from 'next/link';
-
+// Extremely simplified 404 page with no dependencies
 export default function NotFound() {
   return (
-    <div 
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#000',
-        color: '#fff',
-        textAlign: 'center',
-        padding: '20px'
-      }}
-    >
-      <h1 style={{ fontSize: '4rem', marginBottom: '1rem' }}>404</h1>
-      <h2 style={{ marginBottom: '1rem' }}>Page Not Found</h2>
-      <p style={{ marginBottom: '2rem' }}>
+    <div style={{
+      fontFamily: 'system-ui, sans-serif',
+      display: 'flex',
+      flexDirection: 'column', 
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      maxWidth: '600px',
+      margin: '0 auto',
+      padding: '20px',
+      textAlign: 'center',
+      color: 'white',
+      background: 'black'
+    }}>
+      <h1 style={{ fontSize: '4rem', margin: '0 0 16px' }}>404</h1>
+      <h2 style={{ margin: '0 0 16px' }}>Page Not Found</h2>
+      <p style={{ margin: '0 0 24px' }}>
         The page you are looking for does not exist.
       </p>
-      <Link 
+      <a 
         href="/"
         style={{
-          backgroundColor: '#3B82F6',
+          background: '#3B82F6',
           color: 'white',
           padding: '10px 20px',
           borderRadius: '5px',
@@ -32,7 +31,7 @@ export default function NotFound() {
         }}
       >
         Go Home
-      </Link>
+      </a>
     </div>
   );
 } 

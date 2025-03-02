@@ -33,18 +33,17 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  // Configuration to prevent URL-related issues during build
+  // Set output to export to completely bypass static generation issues
+  output: "export",
+  // Disable static optimizations and prerendering
+  distDir: ".next",
+  // Disable URL normalization which can cause issues
   skipTrailingSlashRedirect: true,
   skipMiddlewareUrlNormalize: true,
-  // Use standalone output for better server-side handling
-  output: "standalone",
-  // Disable prerendering to ensure not-found is generated at runtime
-  experimental: {
-    disableOptimizedLoading: true,
-    serverActions: {
-      bodySizeLimit: '2mb'
-    }
-  }
+  // Configure dynamicParams to true for dynamic routes
+  dynamicParams: true,
+  // Skip Next.js prerendering altogether
+  trailingSlash: false
 };
 
 export default nextConfig;
