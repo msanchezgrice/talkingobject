@@ -3,21 +3,20 @@ import { notFound } from 'next/navigation';
 import { getAgentBySlug } from '@/lib/placeholder-agents';
 import ClientAgentPage from './ClientAgentPage';
 
-type AgentPageParams = {
-  slug: string;
-};
-
 // Generate dynamic metadata for each agent
-export async function generateMetadata({ 
-  params 
-}: { 
-  params: AgentPageParams 
-}): Promise<Metadata | undefined> {
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
   const slug = params.slug;
   const agent = getAgentBySlug(slug);
   
   if (!agent) {
-    return undefined;
+    return {
+      title: 'Agent Not Found | Talking Objects',
+      description: 'The requested agent could not be found.'
+    };
   }
   
   // Truncate description if too long
@@ -42,12 +41,8 @@ export async function generateMetadata({
   };
 }
 
-// Simplified page component adhering to Next.js 15 standards
-export default async function AgentPage({ 
-  params 
-}: { 
-  params: AgentPageParams
-}) {
+// Extremely simplified page component
+export default function Page({ params }: { params: { slug: string } }) {
   const slug = params.slug;
   const agent = getAgentBySlug(slug);
   
