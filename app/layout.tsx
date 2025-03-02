@@ -17,7 +17,36 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Talking Objects",
-  description: "Create interactive, location-aware AI agents that can engage with the real world",
+  description: "Bring real-world objects to life with interactive conversations",
+  keywords: ["talking objects", "interactive", "conversations", "location-aware"],
+  authors: [{ name: "Talking Objects Team" }],
+  viewport: "width=device-width, initial-scale=1",
+  icons: {
+    icon: [{ url: "/chat-bubble.svg" }],
+    apple: [{ url: "/chat-bubble.svg" }],
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://talkingobjects.ai",
+    title: "Talking Objects",
+    description: "Bring real-world objects to life with interactive conversations",
+    siteName: "Talking Objects",
+    images: [
+      {
+        url: "/images/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Talking Objects - Bring objects to life through conversations",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Talking Objects",
+    description: "Bring real-world objects to life with interactive conversations",
+    images: ["/images/og-image.jpg"],
+  },
 };
 
 export default function RootLayout({

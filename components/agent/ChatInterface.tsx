@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import type { PlaceholderAgent } from '@/lib/placeholder-agents';
 import { generateOpenAIResponse } from '@/lib/openai';
 import Image from 'next/image';
@@ -22,6 +22,7 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const conversationInitialized = useRef(false);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -30,13 +31,13 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
     }
   }, [messages]);
 
-  // Helper function to send an agent message
-  const sendAgentMessage = async (content: string) => {
+  // Helper function to send an agent message - wrapped in useCallback
+  const sendAgentMessage = useCallback(async (content: string) => {
     if (!conversationId) return;
     
     // Add the agent message to the UI
     const agentMessage: Message = {
-      id: Date.now().toString(),
+      id: `agent-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`,
       created_at: new Date().toISOString(),
       content,
       role: 'assistant'
@@ -49,20 +50,31 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
       conversationId,
       message: agentMessage
     });
-  };
+  }, [conversationId]);
 
   // Create a greeting message when the component mounts
   useEffect(() => {
+    // Prevent multiple initializations
+    if (conversationInitialized.current) return;
+    
     const createConversation = async () => {
       try {
         // Generate a session ID for this conversation
-        const sessionId = Math.random().toString(36).substring(2, 15);
-        const conversationId = `${agent.id}-${sessionId}`;
+        const sessionId = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+        const newConversationId = `${agent.id}-${sessionId}`;
         
-        setConversationId(conversationId);
+        setConversationId(newConversationId);
         
-        // Add an initial greeting message
-        await sendAgentMessage(`Hi there! I'm ${agent.name}. How can I help you today?`);
+        // Load previous conversation if exists
+        const existingMessages = loadMessagesFromLocalStorage(newConversationId);
+        if (existingMessages && existingMessages.length > 0) {
+          setMessages(existingMessages);
+        } else {
+          // Add an initial greeting message only if no previous conversation
+          await sendAgentMessage(`Hi there! I'm ${agent.name}. How can I help you today?`);
+        }
+        
+        conversationInitialized.current = true;
       } catch (error) {
         console.error('Error creating conversation:', error);
       }
@@ -71,18 +83,55 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
     createConversation();
   }, [agent, sendAgentMessage]);
 
+  // Save message to localStorage
+  const saveMessageToLocalStorage = ({ conversationId, message }: { conversationId: string, message: Message }) => {
+    try {
+      // Get existing conversations or initialize empty object
+      const storedConversations = localStorage.getItem('agentConversations');
+      const conversations = storedConversations ? JSON.parse(storedConversations) : {};
+      
+      // Get or initialize this conversation's messages
+      const conversationMessages = conversations[conversationId] || [];
+      
+      // Add the new message
+      conversationMessages.push(message);
+      
+      // Update the conversations object
+      conversations[conversationId] = conversationMessages;
+      
+      // Save back to localStorage
+      localStorage.setItem('agentConversations', JSON.stringify(conversations));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  };
+
+  // Load messages from localStorage
+  const loadMessagesFromLocalStorage = (conversationId: string): Message[] | null => {
+    try {
+      const storedConversations = localStorage.getItem('agentConversations');
+      if (!storedConversations) return null;
+      
+      const conversations = JSON.parse(storedConversations);
+      return conversations[conversationId] || null;
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+      return null;
+    }
+  };
+
   // Send a message to the agent
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!input.trim() || !conversationId) return;
+    if (!input.trim() || !conversationId || isLoading) return;
     
     try {
       setIsLoading(true);
       
       // Add the user message to the UI immediately
       const userMessage: Message = {
-        id: Date.now().toString(), // Temporary ID
+        id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`,
         created_at: new Date().toISOString(),
         content: input,
         role: 'user'
@@ -115,29 +164,6 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
     } catch (error) {
       console.error('Error sending message:', error);
       setIsLoading(false);
-    }
-  };
-
-  // Save message to localStorage
-  const saveMessageToLocalStorage = ({ conversationId, message }: { conversationId: string, message: Message }) => {
-    try {
-      // Get existing conversations or initialize empty object
-      const storedConversations = localStorage.getItem('agentConversations');
-      const conversations = storedConversations ? JSON.parse(storedConversations) : {};
-      
-      // Get or initialize this conversation's messages
-      const conversationMessages = conversations[conversationId] || [];
-      
-      // Add the new message
-      conversationMessages.push(message);
-      
-      // Update the conversations object
-      conversations[conversationId] = conversationMessages;
-      
-      // Save back to localStorage
-      localStorage.setItem('agentConversations', JSON.stringify(conversations));
-    } catch (error) {
-      console.error('Error saving to localStorage:', error);
     }
   };
 
