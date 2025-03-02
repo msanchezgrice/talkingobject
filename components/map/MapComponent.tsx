@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { Icon } from 'leaflet';
-import Link from 'next/link';
+import React from 'react';
 import { PlaceholderAgent } from '@/lib/placeholder-agents';
+import Link from 'next/link';
+import { useLeafletComponents } from '@/lib/useMapComponent';
 
 // Need to import Leaflet CSS
 import 'leaflet/dist/leaflet.css';
 
+// Define the props interface outside the component
 interface MapComponentProps {
   agents: PlaceholderAgent[];
   height?: string;
@@ -24,35 +24,31 @@ const MapComponent: React.FC<MapComponentProps> = ({
   center = [30.2672, -97.7431], // Default to Austin, TX coordinates
   linkBase = '/agent',
 }) => {
-  const [isClient, setIsClient] = useState(false);
+  // Use our custom hook to get Leaflet components
+  const { isLoaded, components } = useLeafletComponents();
 
-  // Prevent SSR issues with Leaflet
-  useEffect(() => {
-    setIsClient(true);
-    
-    // Fix for default marker icons in React-Leaflet
-    // This is a workaround for the missing marker issue in react-leaflet
-    delete (Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
-    Icon.Default.mergeOptions({
-      iconRetinaUrl: '/images/marker-icon-2x.png',
-      iconUrl: '/images/marker-icon.png',
-      shadowUrl: '/images/marker-shadow.png',
-    });
-  }, []);
-
-  // Customize the marker icon
-  const customIcon = new Icon({
-    iconUrl: '/images/marker-icon.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowUrl: '/images/marker-shadow.png',
-    shadowSize: [41, 41],
-  });
-
-  if (!isClient) {
-    return <div style={{ height, width: '100%', backgroundColor: '#f0f0f0' }}>Loading map...</div>;
+  // Show loading state while components are loading
+  if (!isLoaded || !components) {
+    return (
+      <div 
+        style={{ 
+          height, 
+          width: '100%', 
+          backgroundColor: '#f0f0f0', 
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        Loading map...
+      </div>
+    );
   }
+
+  // Destructure the dynamically imported components
+  const { MapContainer, TileLayer, Marker, Popup } = components;
+  const customIcon = components.customIcon;
 
   return (
     <MapContainer
