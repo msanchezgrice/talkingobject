@@ -2,6 +2,8 @@
 const nextConfig = {
   // Basic configuration
   reactStrictMode: false,
+  // Switch to serverless rendering
+  output: 'standalone',
   // Image domains configuration
   images: {
     domains: [

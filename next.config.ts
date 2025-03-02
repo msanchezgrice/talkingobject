@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  // Switch to serverless rendering
+  output: 'standalone',
   images: {
     domains: [
       'via.placeholder.com',
