@@ -6,28 +6,28 @@ export default function Home() {
       {/* Hero Section */}
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-5xl md:text-6xl font-bold mb-8">
               Bring Objects to Life with Talking Objects
             </h1>
-            <p className="text-xl mb-12 text-gray-300">
+          <p className="text-xl mb-12 text-gray-300">
               Imagine statues, landmarks, and everyday items sharing their stories and interacting with people. 
               Create magical experiences that blend the physical world with imagination.
-            </p>
+          </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link 
-                href="/dashboard" 
-                className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg transition-colors"
-              >
+            <Link 
+              href="/dashboard" 
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg transition-colors"
+            >
                 Create a Talking Object
-              </Link>
-              <Link 
-                href="/explore" 
-                className="border border-gray-600 hover:border-gray-400 text-white font-bold py-3 px-8 rounded-lg transition-colors"
-              >
+            </Link>
+            <Link 
+              href="/explore" 
+              className="border border-gray-600 hover:border-gray-400 text-white font-bold py-3 px-8 rounded-lg transition-colors"
+            >
                 Explore Objects
-              </Link>
+            </Link>
             </div>
           </div>
         </div>
@@ -48,7 +48,7 @@ export default function Home() {
               <h3 className="text-xl font-bold mb-4 text-blue-400">Place in the World</h3>
               <p className="text-gray-300">Connect your talking object to real-world locations. Add coordinates or place QR codes for visitors to interact with.</p>
             </div>
-            <div className="bg-gray-900 p-8 rounded-lg border border-gray-800">
+          <div className="bg-gray-900 p-8 rounded-lg border border-gray-800">
               <div className="h-16 w-16 bg-blue-900 rounded-full flex items-center justify-center mb-6 text-blue-200 text-2xl font-bold">3</div>
               <h3 className="text-xl font-bold mb-4 text-blue-400">Begin Conversations</h3>
               <p className="text-gray-300">Watch as people discover and chat with your creation. Bring magic and wonder to everyday places and objects.</p>

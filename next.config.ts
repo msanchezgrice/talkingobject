@@ -1,42 +1,29 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  // Switch to serverless rendering
-  output: 'standalone',
+  /* Production-optimized config for Vercel deployment */
+  reactStrictMode: true,
+  swcMinify: true, // Uses SWC minifier instead of Terser for faster builds
   images: {
     domains: [
-      'via.placeholder.com',
+      'via.placeholder.com', 
       'localhost',
-      'placehold.co',
-      'placekitten.com',
-      'picsum.photos',
-      'api.qrserver.com'
+      'placehold.co', // For placeholder images
+      'vercel.app', // For Vercel deployment URLs
+      'talkingobjects.ai' // Custom domain
     ],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
   },
-  typescript: {
-    // !! WARN !!
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
-    // !! WARN !!
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
-  // We're primarily using next.config.js now
-  // This file is kept for compatibility
+  // Ensure output is properly optimized
+  output: 'standalone',
+  // Improve production performance
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  }
 };
 
 export default nextConfig;

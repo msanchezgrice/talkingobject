@@ -1,14 +1,17 @@
 {
-  "name": "my-agent",
+  "name": "talking-objects",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build || (echo 'Build encountered errors but continuing...' && exit 0)",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "setup-db": "node scripts/run-sql-setup.js"
+    "setup-db": "node scripts/run-sql-setup.js",
+    "analyze": "ANALYZE=true next build",
+    "download-assets": "bash download-images.sh && bash download-map-assets.sh",
+    "postinstall": "chmod +x download-images.sh download-map-assets.sh && npm run download-assets"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.33.1",
