@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-// import Image from 'next/image';
+import Image from 'next/image';
 import type { PlaceholderAgent } from '@/lib/placeholder-agents';
 
 type AgentInfoProps = {
@@ -64,12 +64,13 @@ export default function AgentInfo({ agent }: AgentInfoProps) {
         <div className="bg-gray-800 p-4 rounded-md flex flex-col items-center">
           <div className="w-48 h-48 bg-white p-2 mb-4 rounded-md">
             {/* Use regular img tag instead of Next.js Image to avoid hostname configuration */}
-            <img 
+            <Image 
               src={qrUrl}
               alt={`QR Code for ${agent.name}`}
               width={200}
               height={200}
               className="mx-auto"
+              unoptimized
             />
           </div>
           

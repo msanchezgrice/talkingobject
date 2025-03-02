@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { PlaceholderAgent } from '@/lib/placeholder-agents';
 import { generateOpenAIResponse } from '@/lib/openai';
+import Image from 'next/image';
 
 type ChatInterfaceProps = {
   agent: PlaceholderAgent;
@@ -29,6 +30,27 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
     }
   }, [messages]);
 
+  // Helper function to send an agent message
+  const sendAgentMessage = async (content: string) => {
+    if (!conversationId) return;
+    
+    // Add the agent message to the UI
+    const agentMessage: Message = {
+      id: Date.now().toString(),
+      created_at: new Date().toISOString(),
+      content,
+      role: 'assistant'
+    };
+    
+    setMessages(prev => [...prev, agentMessage]);
+    
+    // Store the conversation in localStorage
+    saveMessageToLocalStorage({
+      conversationId,
+      message: agentMessage
+    });
+  };
+
   // Create a greeting message when the component mounts
   useEffect(() => {
     const createConversation = async () => {
@@ -47,7 +69,7 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
     };
     
     createConversation();
-  }, [agent]);
+  }, [agent, sendAgentMessage]);
 
   // Send a message to the agent
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -94,27 +116,6 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
       console.error('Error sending message:', error);
       setIsLoading(false);
     }
-  };
-
-  // Helper function to send an agent message
-  const sendAgentMessage = async (content: string) => {
-    if (!conversationId) return;
-    
-    // Add the agent message to the UI
-    const agentMessage: Message = {
-      id: Date.now().toString(),
-      created_at: new Date().toISOString(),
-      content,
-      role: 'assistant'
-    };
-    
-    setMessages(prev => [...prev, agentMessage]);
-    
-    // Store the conversation in localStorage
-    saveMessageToLocalStorage({
-      conversationId,
-      message: agentMessage
-    });
   };
 
   // Save message to localStorage
@@ -202,10 +203,13 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
       <div className="p-4 border-b border-gray-800 flex items-center gap-4">
         <div className="w-12 h-12 bg-gray-800 rounded-full overflow-hidden">
           {agent.image_url ? (
-            <img 
+            <Image 
               src={agent.image_url} 
               alt={agent.name} 
+              width={48}
+              height={48}
               className="w-full h-full object-cover"
+              unoptimized
             />
           ) : (
             <div className="w-full h-full bg-blue-600 flex items-center justify-center text-white text-xl font-bold">
