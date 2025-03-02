@@ -34,8 +34,6 @@ const nextConfig = {
     maxInactiveAge: 25 * 1000,
     pagesBufferLength: 2,
   },
-  // Skip advanced optimizations that might cause issues
-  swcMinify: false,
   // Disable optimizations that might cause errors
   experimental: {
     optimizeCss: false,
