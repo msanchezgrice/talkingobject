@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
-import type { Agent } from '@/lib/supabase/types';
+// import Image from 'next/image';
+import type { PlaceholderAgent } from '@/lib/placeholder-agents';
 
 type AgentInfoProps = {
-  agent: Agent;
+  agent: PlaceholderAgent;
 };
 
 export default function AgentInfo({ agent }: AgentInfoProps) {
@@ -36,13 +36,13 @@ export default function AgentInfo({ agent }: AgentInfoProps) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-medium mb-4">About {agent.name}</h3>
-        <p className="mb-4 whitespace-pre-wrap">{agent.personality}</p>
+      <div className="bg-gray-900 rounded-lg shadow p-6 border border-gray-800">
+        <h3 className="text-lg font-medium mb-4 text-white">About {agent.name}</h3>
+        <p className="mb-4 whitespace-pre-wrap text-gray-300">{agent.personality}</p>
         
-        <h4 className="font-medium mb-2">Data Sources</h4>
+        <h4 className="font-medium mb-2 text-gray-200">Data Sources</h4>
         {agent.data_sources && agent.data_sources.length > 0 ? (
-          <ul className="list-disc pl-5 mb-4 text-sm text-gray-600">
+          <ul className="list-disc pl-5 mb-4 text-sm text-gray-400">
             {agent.data_sources.map(source => (
               <li key={source}>{source.charAt(0).toUpperCase() + source.slice(1)}</li>
             ))}
@@ -52,18 +52,19 @@ export default function AgentInfo({ agent }: AgentInfoProps) {
         )}
         
         {(agent.latitude && agent.longitude) && (
-          <div className="border-t pt-4 mt-4">
-            <h4 className="font-medium mb-2">Location</h4>
+          <div className="border-t border-gray-800 pt-4 mt-4">
+            <h4 className="font-medium mb-2 text-gray-200">Location</h4>
             <p className="text-sm text-gray-500">{agent.latitude.toFixed(6)}° N, {agent.longitude.toFixed(6)}° W</p>
           </div>
         )}
       </div>
       
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-medium mb-4">Share This Agent</h3>
-        <div className="bg-gray-100 p-4 rounded-md flex flex-col items-center">
-          <div className="w-48 h-48 bg-white p-2 mb-4 border rounded-md">
-            <Image 
+      <div className="bg-gray-900 rounded-lg shadow p-6 border border-gray-800">
+        <h3 className="text-lg font-medium mb-4 text-white">Share This Agent</h3>
+        <div className="bg-gray-800 p-4 rounded-md flex flex-col items-center">
+          <div className="w-48 h-48 bg-white p-2 mb-4 rounded-md">
+            {/* Use regular img tag instead of Next.js Image to avoid hostname configuration */}
+            <img 
               src={qrUrl}
               alt={`QR Code for ${agent.name}`}
               width={200}
@@ -72,20 +73,20 @@ export default function AgentInfo({ agent }: AgentInfoProps) {
             />
           </div>
           
-          <p className="text-sm text-center mb-3">
+          <p className="text-sm text-center mb-3 text-gray-300">
             Scan this QR code to chat with {agent.name}
           </p>
           
           <div className="flex gap-2">
             <button 
               onClick={handleDownloadQR}
-              className="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-md text-sm transition-colors"
+              className="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-md text-sm transition-colors text-gray-300"
             >
               Download
             </button>
             <button 
               onClick={handleCopyLink}
-              className="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded-md text-sm transition-colors relative"
+              className="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-md text-sm transition-colors relative text-gray-300"
             >
               {copySuccess || 'Copy Link'}
               {copySuccess && (

@@ -1,11 +1,18 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { supabase } from '@/lib/supabase/client';
-import type { Agent, Message } from '@/lib/supabase/types';
+import type { PlaceholderAgent } from '@/lib/placeholder-agents';
+import { generateOpenAIResponse } from '@/lib/openai';
 
 type ChatInterfaceProps = {
-  agent: Agent;
+  agent: PlaceholderAgent;
+};
+
+type Message = {
+  id: string;
+  created_at: string;
+  content: string;
+  role: 'user' | 'assistant';
 };
 
 export default function ChatInterface({ agent }: ChatInterfaceProps) {
@@ -26,27 +33,11 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
   useEffect(() => {
     const createConversation = async () => {
       try {
-        // Generate a session ID for anonymous users
+        // Generate a session ID for this conversation
         const sessionId = Math.random().toString(36).substring(2, 15);
+        const conversationId = `${agent.id}-${sessionId}`;
         
-        // Get user ID if logged in
-        const { data: { session } } = await supabase.auth.getSession();
-        const userId = session?.user?.id || null;
-        
-        // Create a new conversation
-        const { data, error } = await supabase
-          .from('conversations')
-          .insert({
-            agent_id: agent.id,
-            user_id: userId,
-            session_id: sessionId
-          })
-          .select()
-          .single();
-          
-        if (error) throw error;
-        
-        setConversationId(data.id);
+        setConversationId(conversationId);
         
         // Add an initial greeting message
         await sendAgentMessage(`Hi there! I'm ${agent.name}. How can I help you today?`);
@@ -71,7 +62,6 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
       const userMessage: Message = {
         id: Date.now().toString(), // Temporary ID
         created_at: new Date().toISOString(),
-        conversation_id: conversationId,
         content: input,
         role: 'user'
       };
@@ -79,43 +69,29 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
       setMessages(prev => [...prev, userMessage]);
       setInput('');
       
-      // Save the user message to the database
-      const { error: saveError } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: conversationId,
-          content: input,
-          role: 'user'
-        });
-        
-      if (saveError) throw saveError;
-      
-      // Call the API to get the agent's response
-      const response = await fetch('/api/agent/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversationId,
-          message: input,
-          agentId: agent.id
-        }),
+      // Store the conversation in localStorage
+      saveMessageToLocalStorage({
+        conversationId,
+        message: userMessage
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to get response from agent');
-      }
-      
-      const data = await response.json();
-      
-      // Add the agent's response to the UI
-      await sendAgentMessage(data.message);
+      // Simulate a delay for the agent's response (1-3 seconds)
+      const delay = Math.floor(Math.random() * 2000) + 1000;
+      setTimeout(async () => {
+        try {
+          // Get AI response using the enhanced function
+          const responseText = await getAIResponse(input, agent);
+          await sendAgentMessage(responseText);
+        } catch (error) {
+          console.error('Error generating response:', error);
+          await sendAgentMessage("I'm sorry, I had trouble processing your request. Could you try again?");
+        } finally {
+          setIsLoading(false);
+        }
+      }, delay);
       
     } catch (error) {
       console.error('Error sending message:', error);
-      alert('Failed to send message. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -126,53 +102,105 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
     
     // Add the agent message to the UI
     const agentMessage: Message = {
-      id: Date.now().toString(), // Temporary ID
+      id: Date.now().toString(),
       created_at: new Date().toISOString(),
-      conversation_id: conversationId,
       content,
       role: 'assistant'
     };
     
     setMessages(prev => [...prev, agentMessage]);
     
-    // Save the agent message to the database
-    await supabase
-      .from('messages')
-      .insert({
-        conversation_id: conversationId,
-        content,
-        role: 'assistant'
-      });
+    // Store the conversation in localStorage
+    saveMessageToLocalStorage({
+      conversationId,
+      message: agentMessage
+    });
   };
 
-  // Load previous messages when the conversationId is set
-  useEffect(() => {
-    const loadMessages = async () => {
-      if (!conversationId) return;
+  // Save message to localStorage
+  const saveMessageToLocalStorage = ({ conversationId, message }: { conversationId: string, message: Message }) => {
+    try {
+      // Get existing conversations or initialize empty object
+      const storedConversations = localStorage.getItem('agentConversations');
+      const conversations = storedConversations ? JSON.parse(storedConversations) : {};
       
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
-        
-      if (error) {
-        console.error('Error loading messages:', error);
-        return;
-      }
+      // Get or initialize this conversation's messages
+      const conversationMessages = conversations[conversationId] || [];
       
-      if (data) {
-        setMessages(data as Message[]);
-      }
-    };
+      // Add the new message
+      conversationMessages.push(message);
+      
+      // Update the conversations object
+      conversations[conversationId] = conversationMessages;
+      
+      // Save back to localStorage
+      localStorage.setItem('agentConversations', JSON.stringify(conversations));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  };
+
+  // Simulate an AI response based on the agent's personality
+  const mockAIResponse = async (userMessage: string, agent: PlaceholderAgent): Promise<string> => {
+    // Very simple response generation - in a real app this would call OpenAI/Anthropic
+    const lowercaseMessage = userMessage.toLowerCase();
     
-    loadMessages();
-  }, [conversationId]);
+    // Simple greeting detection
+    if (lowercaseMessage.includes('hello') || lowercaseMessage.includes('hi ') || lowercaseMessage === 'hi') {
+      return `Hello! I'm ${agent.name}, your ${agent.personality.split('!')[0].toLowerCase()}. How can I assist you today?`;
+    }
+    
+    // If asked about capabilities
+    if (lowercaseMessage.includes('what can you do') || lowercaseMessage.includes('help me with')) {
+      return `As ${agent.name}, ${agent.personality} I'd be happy to chat about ${agent.interests.join(', ')}.`;
+    }
+    
+    // If asked about location
+    if (lowercaseMessage.includes('where are you') || lowercaseMessage.includes('location')) {
+      if (agent.latitude && agent.longitude) {
+        return `I'm virtually located at latitude ${agent.latitude} and longitude ${agent.longitude}. This would typically be in a major city or point of interest.`;
+      } else {
+        return "I don't have a specific location assigned to me. I exist virtually to help you with information!";
+      }
+    }
+    
+    // Default response that references the agent's personality and interests
+    return `Based on my expertise in ${agent.interests.join(', ')}, I would typically provide a detailed response here about "${userMessage}". In a complete implementation, this would be generated by OpenAI or Anthropic's API based on my personality: ${agent.personality}`;
+  };
+
+  // Add an OpenAI-powered response generator
+  const getAIResponse = async (userMessage: string, agent: PlaceholderAgent): Promise<string> => {
+    try {
+      // Get chat history for context (limited to last 10 messages)
+      const chatHistory = messages
+        .slice(-10)
+        .map(msg => ({ role: msg.role, content: msg.content }));
+
+      // Try OpenAI API first
+      const openAIResult = await generateOpenAIResponse({
+        prompt: userMessage,
+        agentPersonality: agent.personality,
+        agentInterests: agent.interests,
+        chatHistory: chatHistory
+      });
+
+      if (openAIResult.success) {
+        return openAIResult.response;
+      } else {
+        console.warn('OpenAI API error:', openAIResult.error);
+        // Fall back to mock response if OpenAI fails
+        return openAIResult.fallbackResponse || await mockAIResponse(userMessage, agent);
+      }
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      return await mockAIResponse(userMessage, agent);
+    }
+  };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col">
-      <div className="p-4 border-b flex items-center gap-4">
-        <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
+    <div className="bg-gray-900 rounded-lg shadow overflow-hidden flex flex-col border border-gray-800" style={{ maxHeight: '70vh' }}>
+      <div className="p-4 border-b border-gray-800 flex items-center gap-4">
+        <div className="w-12 h-12 bg-gray-800 rounded-full overflow-hidden">
           {agent.image_url ? (
             <img 
               src={agent.image_url} 
@@ -186,9 +214,9 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
           )}
         </div>
         <div>
-          <h2 className="font-bold text-xl">{agent.name}</h2>
+          <h2 className="font-bold text-xl text-white">{agent.name}</h2>
           {agent.latitude && agent.longitude && (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-400">
               Located at {agent.latitude.toFixed(6)}, {agent.longitude.toFixed(6)}
             </p>
           )}
@@ -197,7 +225,7 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
       
       <div 
         ref={chatContainerRef}
-        className="h-96 p-4 overflow-y-auto bg-gray-50 flex-1"
+        className="p-4 overflow-y-auto bg-gray-800 flex-1" style={{ height: '350px' }}
       >
         {messages.length === 0 ? (
           <div className="flex justify-center items-center h-full text-gray-400">
@@ -210,11 +238,11 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
                 key={message.id}
                 className={`p-3 rounded-lg shadow-sm max-w-[80%] ${
                   message.role === 'user' 
-                    ? 'bg-blue-100 self-end' 
-                    : 'bg-white'
+                    ? 'bg-blue-900 text-blue-100 self-end' 
+                    : 'bg-gray-700 text-gray-100'
                 }`}
               >
-                <p className="text-sm font-medium text-gray-500 mb-1">
+                <p className="text-sm font-medium mb-1 text-gray-300">
                   {message.role === 'user' ? 'You' : agent.name}
                 </p>
                 <p className="whitespace-pre-wrap">{message.content}</p>
@@ -222,12 +250,12 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
             ))}
             
             {isLoading && (
-              <div className="bg-white p-3 rounded-lg shadow-sm max-w-[80%]">
-                <p className="text-sm font-medium text-gray-500 mb-1">{agent.name}</p>
+              <div className="bg-gray-700 p-3 rounded-lg shadow-sm max-w-[80%]">
+                <p className="text-sm font-medium mb-1 text-gray-300">{agent.name}</p>
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
                 </div>
               </div>
             )}
@@ -235,20 +263,20 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
         )}
       </div>
       
-      <form onSubmit={handleSendMessage} className="p-4 border-t">
+      <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-800">
         <div className="flex gap-2">
           <input 
             type="text" 
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..." 
-            className="flex-1 p-2 border rounded-md"
+            className="flex-1 p-2 border rounded-md bg-gray-800 text-white border-gray-700"
             disabled={isLoading || !conversationId}
           />
           <button 
             type="submit"
             disabled={isLoading || !input.trim() || !conversationId}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-50"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send
           </button>

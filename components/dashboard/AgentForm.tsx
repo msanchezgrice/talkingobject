@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { supabase } from '@/lib/supabase/client';
-import type { Agent } from '@/lib/supabase/types';
+import { addAgent, updateAgent, PlaceholderAgent, PUBLIC_USER_ID } from '@/lib/placeholder-agents';
 
 // Data sources available to agents
 const DATA_SOURCES = [
@@ -16,7 +15,7 @@ const DATA_SOURCES = [
 ];
 
 type AgentFormProps = {
-  agent?: Agent; // If provided, we're editing an existing agent
+  agent?: PlaceholderAgent; // If provided, we're editing an existing agent
 };
 
 export default function AgentForm({ agent }: AgentFormProps = {}) {
@@ -80,34 +79,14 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
         throw new Error('Please fill in all required fields');
       }
       
-      // Get current user
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('You must be logged in to create an agent');
-      }
+      // Use our public user ID
+      const publicUserId = PUBLIC_USER_ID;
       
-      let imageUrl = agent?.image_url || null;
+      let imageUrl = agent?.image_url || undefined;
       
-      // Upload image if provided
+      // Use placeholder image
       if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-        const filePath = `agent-images/${session.user.id}/${fileName}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('agents')
-          .upload(filePath, imageFile);
-          
-        if (uploadError) {
-          throw uploadError;
-        }
-        
-        // Get the public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('agents')
-          .getPublicUrl(filePath);
-          
-        imageUrl = publicUrl;
+        imageUrl = '/images/placeholder.jpg';
       }
       
       // Prepare agent data
@@ -115,67 +94,67 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
         name,
         slug,
         personality,
-        latitude: latitude ? parseFloat(latitude) : null,
-        longitude: longitude ? parseFloat(longitude) : null,
+        description: personality, // Use personality as description too
+        interests: ['custom'], // Default interests
+        is_active: true,
+        latitude: latitude ? parseFloat(latitude) : undefined,
+        longitude: longitude ? parseFloat(longitude) : undefined,
         image_url: imageUrl,
         data_sources: selectedDataSources,
-        user_id: session.user.id
+        user_id: publicUserId
       };
       
-      // Insert or update agent
-      if (isEditing) {
-        const { error: updateError } = await supabase
-          .from('agents')
-          .update(agentData)
-          .eq('id', agent.id);
-          
-        if (updateError) throw updateError;
+      if (isEditing && agent) {
+        // For editing, update the agent in localStorage
+        const updatedAgent = updateAgent(agent.id, agentData);
+        console.log('Updated agent:', updatedAgent);
       } else {
-        const { error: insertError } = await supabase
-          .from('agents')
-          .insert(agentData);
-          
-        if (insertError) throw insertError;
+        // For creating a new agent, add it to localStorage
+        const newAgent = addAgent(agentData);
+        console.log('Created new agent:', newAgent);
       }
       
       // Navigate back to dashboard
       router.push('/dashboard');
-      router.refresh();
       
-    } catch (err: any) {
-      setError(err.message || 'An error occurred while saving the agent');
-      console.error(err);
+    } catch (err: unknown) {
+      let errorMessage = 'An error occurred while saving the agent';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+      console.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
   
   return (
-    <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6">
+    <form onSubmit={handleSubmit} className="bg-gray-900 text-white shadow-md rounded-lg p-6">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6" role="alert">
+        <div className="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded mb-6" role="alert">
           {error}
         </div>
       )}
       
       <div className="mb-8">
-        <h3 className="text-lg font-medium mb-4 pb-2 border-b">Basic Information</h3>
+        <h3 className="text-lg font-medium mb-4 pb-2 border-b border-gray-700">Basic Information</h3>
         
         <div className="mb-4">
-          <label htmlFor="name" className="block text-sm font-medium mb-1">Agent Name*</label>
+          <label htmlFor="name" className="block text-sm font-medium mb-1 text-gray-300">Agent Name*</label>
           <input 
             type="text" 
             id="name" 
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full p-2 border rounded-md"
+            className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
             placeholder="E.g., Coffee Shop Guide"
             required
           />
         </div>
 
         <div className="mb-4">
-          <label htmlFor="slug" className="block text-sm font-medium mb-1">URL Slug*</label>
+          <label htmlFor="slug" className="block text-sm font-medium mb-1 text-gray-300">URL Slug*</label>
           <div className="flex items-center">
             <span className="text-gray-500 mr-1">{process.env.NEXT_PUBLIC_BASE_URL}/agent/</span>
             <input 
@@ -183,7 +162,7 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
               id="slug" 
               value={slug}
               onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''))}
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
               placeholder="coffee-shop-guide"
               required
             />
@@ -192,12 +171,12 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
         </div>
 
         <div className="mb-4">
-          <label htmlFor="personality" className="block text-sm font-medium mb-1">Personality*</label>
+          <label htmlFor="personality" className="block text-sm font-medium mb-1 text-gray-300">Personality*</label>
           <textarea 
             id="personality" 
             value={personality}
             onChange={(e) => setPersonality(e.target.value)}
-            className="w-full p-2 border rounded-md h-32"
+            className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white h-32"
             placeholder="Describe your agent's personality, tone, and backstory..."
             required
           ></textarea>
@@ -205,28 +184,28 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
       </div>
 
       <div className="mb-8">
-        <h3 className="text-lg font-medium mb-4 pb-2 border-b">Location</h3>
+        <h3 className="text-lg font-medium mb-4 pb-2 border-b border-gray-700">Location</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="latitude" className="block text-sm font-medium mb-1">Latitude</label>
+            <label htmlFor="latitude" className="block text-sm font-medium mb-1 text-gray-300">Latitude</label>
             <input 
               type="text" 
               id="latitude" 
               value={latitude}
               onChange={(e) => setLatitude(e.target.value)}
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
               placeholder="E.g., 37.7749"
             />
           </div>
           <div>
-            <label htmlFor="longitude" className="block text-sm font-medium mb-1">Longitude</label>
+            <label htmlFor="longitude" className="block text-sm font-medium mb-1 text-gray-300">Longitude</label>
             <input 
               type="text" 
               id="longitude" 
               value={longitude}
               onChange={(e) => setLongitude(e.target.value)}
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
               placeholder="E.g., -122.4194"
             />
           </div>
@@ -237,10 +216,10 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
       </div>
 
       <div className="mb-8">
-        <h3 className="text-lg font-medium mb-4 pb-2 border-b">Appearance</h3>
+        <h3 className="text-lg font-medium mb-4 pb-2 border-b border-gray-700">Appearance</h3>
         
         <div className="mb-4">
-          <label htmlFor="image" className="block text-sm font-medium mb-1">Agent Image</label>
+          <label htmlFor="image" className="block text-sm font-medium mb-1 text-gray-300">Agent Image</label>
           
           {imagePreview ? (
             <div className="mb-4">
@@ -261,8 +240,8 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
               </button>
             </div>
           ) : (
-            <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center">
-              <p className="mb-2">Drag and drop an image here, or click to select</p>
+            <div className="border-2 border-dashed border-gray-700 rounded-md p-4 text-center">
+              <p className="mb-2 text-gray-400">Drag and drop an image here, or click to select</p>
               <input
                 type="file"
                 id="image"
@@ -272,7 +251,7 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
               />
               <label 
                 htmlFor="image"
-                className="bg-gray-100 hover:bg-gray-200 text-sm py-1 px-3 rounded-md cursor-pointer inline-block"
+                className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm py-1 px-3 rounded-md cursor-pointer inline-block"
               >
                 Upload Image
               </label>
@@ -282,8 +261,8 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
       </div>
 
       <div className="mb-8">
-        <h3 className="text-lg font-medium mb-4 pb-2 border-b">External Data Sources</h3>
-        <p className="mb-4 text-sm">
+        <h3 className="text-lg font-medium mb-4 pb-2 border-b border-gray-700">External Data Sources</h3>
+        <p className="mb-4 text-sm text-gray-400">
           Select which external data sources your agent can access to inform its responses.
         </p>
         
@@ -298,8 +277,8 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
                 className="mt-1 mr-2"
               />
               <div>
-                <label htmlFor={source.id} className="font-medium">{source.name}</label>
-                <p className="text-sm text-gray-500">{source.description}</p>
+                <label htmlFor={source.id} className="font-medium text-white">{source.name}</label>
+                <p className="text-sm text-gray-400">{source.description}</p>
               </div>
             </div>
           ))}
@@ -309,14 +288,14 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
       <div className="flex justify-end gap-3 mt-8">
         <Link 
           href="/dashboard" 
-          className="border border-gray-300 hover:bg-gray-100 px-4 py-2 rounded-md transition-colors"
+          className="border border-gray-700 hover:bg-gray-800 px-4 py-2 rounded-md transition-colors text-gray-300"
         >
           Cancel
         </Link>
         <button 
           type="submit" 
           disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-50"
+          className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-50"
         >
           {loading ? 'Saving...' : isEditing ? 'Update Agent' : 'Create Agent'}
         </button>
