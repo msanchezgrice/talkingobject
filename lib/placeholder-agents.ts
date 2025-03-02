@@ -203,11 +203,6 @@ export const placeholderAgents: PlaceholderAgent[] = [
 
 // Helper function to get all agents
 export const getAllAgents = (): PlaceholderAgent[] => {
-  // TEMPORARY FIX: Clear out old localStorage data to show new agents
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('placeholderAgents');
-  }
-  
   // Get stored agents (custom created or edited)
   const storedAgents = getStoredAgents();
   const storedAgentIds = storedAgents.map(agent => agent.id);
@@ -229,7 +224,7 @@ export const getAgentBySlug = (slug: string): PlaceholderAgent | undefined => {
 // Helper function to save agents to localStorage
 export const saveAgents = (agents: PlaceholderAgent[]): void => {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('placeholderAgents', JSON.stringify(agents));
+    localStorage.setItem('storedAgents', JSON.stringify(agents));
   }
 };
 
@@ -237,7 +232,7 @@ export const saveAgents = (agents: PlaceholderAgent[]): void => {
 export const addAgent = (agent: Omit<PlaceholderAgent, 'id' | 'created_at' | 'updated_at'>): PlaceholderAgent => {
   const newAgent: PlaceholderAgent = {
     ...agent,
-    id: Date.now().toString(), // Generate a unique ID
+    id: `agent-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`, // Generate a unique ID
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -246,6 +241,7 @@ export const addAgent = (agent: Omit<PlaceholderAgent, 'id' | 'created_at' | 'up
   const updatedAgents = [...currentAgents, newAgent];
   
   saveAgents(updatedAgents);
+  console.log('Agent saved to localStorage:', newAgent);
   return newAgent;
 };
 

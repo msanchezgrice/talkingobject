@@ -5,6 +5,17 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { addAgent, updateAgent, PlaceholderAgent, PUBLIC_USER_ID } from '@/lib/placeholder-agents';
+import dynamic from 'next/dynamic';
+
+// Dynamically import LocationPicker to avoid SSR issues
+const LocationPicker = dynamic(() => import('@/components/map/LocationPicker'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[400px] bg-gray-800 rounded-md flex items-center justify-center">
+      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+  )
+});
 
 // Data sources available to agents
 const DATA_SOURCES = [
@@ -31,6 +42,7 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(agent?.image_url || null);
   const [selectedDataSources, setSelectedDataSources] = useState<string[]>(agent?.data_sources || []);
+  const [showMap, setShowMap] = useState(false);
   
   // Form processing state
   const [loading, setLoading] = useState(false);
@@ -186,7 +198,7 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
       <div className="mb-8">
         <h3 className="text-lg font-medium mb-4 pb-2 border-b border-gray-700">Location</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label htmlFor="latitude" className="block text-sm font-medium mb-1 text-gray-300">Latitude</label>
             <input 
@@ -195,7 +207,7 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
               value={latitude}
               onChange={(e) => setLatitude(e.target.value)}
               className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-              placeholder="E.g., 37.7749"
+              placeholder="E.g., 30.2672"
             />
           </div>
           <div>
@@ -206,10 +218,37 @@ export default function AgentForm({ agent }: AgentFormProps = {}) {
               value={longitude}
               onChange={(e) => setLongitude(e.target.value)}
               className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-              placeholder="E.g., -122.4194"
+              placeholder="E.g., -97.7431"
             />
           </div>
         </div>
+        
+        <div className="mt-2 mb-4">
+          <button
+            type="button"
+            onClick={() => setShowMap(!showMap)}
+            className="inline-flex items-center text-blue-400 hover:text-blue-300"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+            </svg>
+            {showMap ? 'Hide Map' : 'Find on Map'}
+          </button>
+        </div>
+        
+        {showMap && (
+          <div className="mb-4">
+            <LocationPicker
+              initialLatitude={latitude ? parseFloat(latitude) : undefined}
+              initialLongitude={longitude ? parseFloat(longitude) : undefined}
+              onLocationSelected={(lat: number, lng: number) => {
+                setLatitude(lat.toString());
+                setLongitude(lng.toString());
+              }}
+            />
+          </div>
+        )}
+        
         <p className="text-sm text-gray-500 mt-2">
           This location will be used to provide contextual information for your agent.
         </p>
