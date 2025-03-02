@@ -29,10 +29,9 @@ const nextConfig = {
   },
   // Override page extensions to search for .jsx first
   pageExtensions: ['jsx', 'js', 'tsx', 'ts'],
-  // Fix fetch event listeners for Vercel
+  // Keep it simple
   experimental: {
-    runtime: 'edge',
-    appDocumentPreloading: false
+    optimizeCss: false,
   }
 };
 
