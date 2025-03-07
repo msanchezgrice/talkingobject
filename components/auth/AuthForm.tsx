@@ -4,6 +4,35 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+// Simulate basic authentication
+const simulateAuth = (email: string, password: string): Promise<{success: boolean, error?: string}> => {
+  return new Promise((resolve) => {
+    // Simulate network delay
+    setTimeout(() => {
+      if (!email.includes('@')) {
+        resolve({ success: false, error: 'Please enter a valid email address' });
+        return;
+      }
+      
+      if (password.length < 6) {
+        resolve({ success: false, error: 'Password must be at least 6 characters long' });
+        return;
+      }
+      
+      // Store the user info in localStorage to simulate a session
+      const userData = {
+        email,
+        name: email.split('@')[0],
+        isLoggedIn: true,
+        lastLogin: new Date().toISOString()
+      };
+      
+      localStorage.setItem('userData', JSON.stringify(userData));
+      resolve({ success: true });
+    }, 800);
+  });
+};
+
 export default function AuthForm() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -17,11 +46,21 @@ export default function AuthForm() {
     setIsLoading(true);
     setError('');
 
-    // For demo purposes, simply redirect to dashboard
-    setTimeout(() => {
-      router.push('/dashboard');
+    try {
+      const result = await simulateAuth(email, password);
+      
+      if (result.success) {
+        console.log('Authentication successful');
+        router.push('/dashboard');
+      } else {
+        setError(result.error || 'Authentication failed');
+        setIsLoading(false);
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
       setIsLoading(false);
-    }, 1000);
+      console.error('Auth error:', err);
+    }
   };
 
   return (
@@ -80,7 +119,7 @@ export default function AuthForm() {
       </div>
       
       <div className="mt-6 pt-6 border-t border-gray-800 text-center text-sm text-gray-400">
-        <p className="mb-2">Demo mode: Authentication is simulated.</p>
+        <p className="mb-2">Demo mode: Authentication is simulated using browser storage.</p>
         <Link href="/" className="text-blue-400 hover:text-blue-300 hover:underline">
           Back to home
         </Link>

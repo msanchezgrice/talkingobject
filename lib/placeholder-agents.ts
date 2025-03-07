@@ -224,7 +224,12 @@ export const getAgentBySlug = (slug: string): PlaceholderAgent | undefined => {
 // Helper function to save agents to localStorage
 export const saveAgents = (agents: PlaceholderAgent[]): void => {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('storedAgents', JSON.stringify(agents));
+    try {
+      localStorage.setItem('storedAgents', JSON.stringify(agents));
+      console.log('Agents saved successfully:', agents.length);
+    } catch (error) {
+      console.error('Error saving agents to localStorage:', error);
+    }
   }
 };
 
@@ -237,12 +242,17 @@ export const addAgent = (agent: Omit<PlaceholderAgent, 'id' | 'created_at' | 'up
     updated_at: new Date().toISOString(),
   };
   
-  const currentAgents = getAllAgents();
-  const updatedAgents = [...currentAgents, newAgent];
-  
-  saveAgents(updatedAgents);
-  console.log('Agent saved to localStorage:', newAgent);
-  return newAgent;
+  try {
+    const currentAgents = getAllAgents();
+    const updatedAgents = [...currentAgents, newAgent];
+    
+    saveAgents(updatedAgents);
+    console.log('New agent created successfully:', newAgent);
+    return newAgent;
+  } catch (error) {
+    console.error('Error adding agent:', error);
+    throw error;
+  }
 };
 
 // Helper function to get a placeholder agent by ID
@@ -260,33 +270,39 @@ export function getAgentById(id: string): PlaceholderAgent | undefined {
 
 // Update an existing agent
 export function updateAgent(id: string, data: Partial<PlaceholderAgent>): PlaceholderAgent {
-  // Get existing agents from localStorage
-  const storedAgents = getStoredAgents();
-  
-  // Find the agent to update (either in localStorage or in the defaults)
-  const agentToUpdate = getAgentById(id);
-  
-  if (!agentToUpdate) {
-    throw new Error(`Agent with ID ${id} not found`);
+  try {
+    // Get existing agents from localStorage
+    const storedAgents = getStoredAgents();
+    
+    // Find the agent to update (either in localStorage or in the defaults)
+    const agentToUpdate = getAgentById(id);
+    
+    if (!agentToUpdate) {
+      throw new Error(`Agent with ID ${id} not found`);
+    }
+    
+    // Create the updated agent
+    const updatedAgent: PlaceholderAgent = {
+      ...agentToUpdate,
+      ...data,
+      updated_at: new Date().toISOString()
+    };
+    
+    // Remove the old version from the stored agents (if it exists)
+    const filteredAgents = storedAgents.filter(agent => agent.id !== id);
+    
+    // Add the updated version
+    filteredAgents.push(updatedAgent);
+    
+    // Save back to localStorage using our helper
+    saveAgents(filteredAgents);
+    
+    console.log('Agent updated successfully:', updatedAgent);
+    return updatedAgent;
+  } catch (error) {
+    console.error('Error updating agent:', error);
+    throw error;
   }
-  
-  // Create the updated agent
-  const updatedAgent: PlaceholderAgent = {
-    ...agentToUpdate,
-    ...data,
-    updated_at: new Date().toISOString()
-  };
-  
-  // Remove the old version from the stored agents (if it exists)
-  const filteredAgents = storedAgents.filter(agent => agent.id !== id);
-  
-  // Add the updated version
-  filteredAgents.push(updatedAgent);
-  
-  // Save back to localStorage
-  localStorage.setItem('storedAgents', JSON.stringify(filteredAgents));
-  
-  return updatedAgent;
 }
 
 // Helper to read stored agents from localStorage

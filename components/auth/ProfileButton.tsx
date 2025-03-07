@@ -3,43 +3,53 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase/client';
-import type { User } from '@supabase/supabase-js';
+
+// Simple user type for our simulated auth
+interface SimulatedUser {
+  email: string;
+  name: string;
+  isLoggedIn: boolean;
+  lastLogin: string;
+}
 
 export default function ProfileButton() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<SimulatedUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    async function getUser() {
+    // Check if user is logged in via our simulated auth
+    const checkAuth = () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user || null);
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+          const parsedUser = JSON.parse(userData);
+          setUser(parsedUser);
+        } else {
+          setUser(null);
+        }
       } catch (error) {
-        console.error('Error fetching user:', error);
+        console.error('Error checking auth:', error);
+        setUser(null);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
-    getUser();
+    checkAuth();
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user || null);
-      }
-    );
-
+    // Listen for storage changes (login/logout from other tabs)
+    window.addEventListener('storage', checkAuth);
     return () => {
-      subscription.unsubscribe();
+      window.removeEventListener('storage', checkAuth);
     };
   }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    // Remove user data from localStorage
+    localStorage.removeItem('userData');
+    setUser(null);
     router.push('/');
     router.refresh();
   };
@@ -69,9 +79,9 @@ export default function ProfileButton() {
         className="flex items-center gap-2 focus:outline-none"
       >
         <div className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
-          {user.email?.charAt(0).toUpperCase() || 'U'}
+          {user.name?.charAt(0).toUpperCase() || 'U'}
         </div>
-        <span className="hidden sm:inline">{user.email}</span>
+        <span className="hidden sm:inline">{user.name}</span>
       </button>
 
       {menuOpen && (
