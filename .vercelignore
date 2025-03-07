@@ -1,0 +1,3 @@
+# Skip problematic pages during build
+app/agent/[slug]/page.tsx
+app/agent/[slug]/opengraph-image.tsx 
