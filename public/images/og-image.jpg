@@ -1,0 +1,6 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#0F172A"/>
+  <path d="M600 150C458.6 150 344 243.1 344 358C344 405.6 363.9 449.2 396.9 484.3C382 523.7 351 557.1 350.5 557.5C343.9 564.5 342.1 574.7 345.9 583.5C349.7 592.3 358.4 598 368 598C429.5 598 478 572.3 507.1 551.7C536 559.8 567.2 565 600 565C741.4 565 856 471.9 856 358C856 243.1 741.4 150 600 150ZM600 534C571.7 534 543.7 529.7 516.8 521.2L501.6 516.4L488.6 525.6C465.6 541.9 430.1 560.9 386 565.2C398 550.1 415.8 524.8 426.8 495.6L433.9 476.9L420.2 462.3C391.3 431.7 376 395.6 376 358C376 261 476.5 182 600 182C723.5 182 824 261 824 358C824 455 723.5 534 600 534Z" fill="#2563EB"/>
+  <text x="600" y="470" font-family="system-ui, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle">Talking Objects</text>
+  <text x="600" y="530" font-family="system-ui, sans-serif" font-size="24" fill="#94A3B8" text-anchor="middle">Bring real-world objects to life with interactive conversations</text>
+</svg> 

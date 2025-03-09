@@ -41,8 +41,12 @@ export async function generateMetadata({
   };
 }
 
-// Extremely simplified page component
-export default function Page({ params }: { params: { slug: string } }) {
+// Fixed page component with proper typing
+interface PageProps {
+  params: { slug: string }
+}
+
+export default async function Page({ params }: PageProps) {
   const slug = params.slug;
   const agent = getAgentBySlug(slug);
   
