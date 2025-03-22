@@ -296,19 +296,6 @@ function generateSlug(name: string): string {
     .replace(/(^-|-$)/g, '');
 }
 
-// Helper function to ensure slug uniqueness
-function ensureUniqueSlug(baseSlug: string, existingAgents: PlaceholderAgent[]): string {
-  let slug = baseSlug;
-  let counter = 1;
-  
-  while (existingAgents.some(agent => agent.slug === slug)) {
-    slug = `${baseSlug}-${counter}`;
-    counter++;
-  }
-  
-  return slug;
-}
-
 // Helper function to add a new agent
 export function addAgent(agentData: Omit<PlaceholderAgent, 'slug' | 'id' | 'created_at' | 'last_updated'>): PlaceholderAgent {
   // Generate a unique slug from the name
