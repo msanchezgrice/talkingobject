@@ -29,6 +29,7 @@
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hot-toast": "^2.5.2",
     "react-leaflet": "^5.0.0",
     "viem": "^2.22.5",
     "wagmi": "^2.14.7"

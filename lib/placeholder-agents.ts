@@ -1,22 +1,23 @@
 // Placeholder agents for local testing based on seed-agents.sql
 // These agents will be cached locally in the browser
 
-export type PlaceholderAgent = {
+export interface PlaceholderAgent {
   id: string;
   name: string;
-  slug: string;
-  personality: string;
   description: string;
+  personality: string;
+  location: string;
+  coordinates: string;
+  image_url: string;
+  twitter_handle: string;
   interests: string[];
-  is_active: boolean;
-  latitude?: number;
-  longitude?: number;
-  image_url?: string;
+  dislikes: string[];
+  fun_facts: string[];
   created_at: string;
-  updated_at: string;
-  user_id: string;
-  data_sources?: string[];
-};
+  last_updated: string;
+  slug: string;
+  is_active: boolean;
+}
 
 export const PUBLIC_USER_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -317,5 +318,28 @@ function getStoredAgents(): PlaceholderAgent[] {
   } catch (error) {
     console.error('Error reading stored agents:', error);
     return [];
+  }
+}
+
+export function saveAgent(agent: PlaceholderAgent): void {
+  try {
+    // Get existing agents
+    const existingAgents = getAllAgents();
+    
+    // Check if agent already exists
+    const existingIndex = existingAgents.findIndex(a => a.slug === agent.slug);
+    
+    if (existingIndex >= 0) {
+      // Update existing agent
+      existingAgents[existingIndex] = agent;
+    } else {
+      // Add new agent
+      existingAgents.push(agent);
+    }
+    
+    // Save back to localStorage
+    saveAgents(existingAgents);
+  } catch (error) {
+    console.error('Error saving agent:', error);
   }
 } 
