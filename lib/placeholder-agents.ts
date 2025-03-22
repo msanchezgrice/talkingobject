@@ -20,6 +20,8 @@ export interface PlaceholderAgent {
   created_at: string;
   last_updated: string;
   category: keyof typeof voiceConfigs;
+  latitude: number;
+  longitude: number;
 }
 
 export const PUBLIC_USER_ID = '00000000-0000-0000-0000-000000000000';
@@ -45,7 +47,9 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     created_at: "2024-01-01",
     last_updated: "2024-01-01",
-    category: "historicSites"
+    category: "historicSites",
+    latitude: 30.2642,
+    longitude: -97.7475
   },
   {
     id: "2",
@@ -67,7 +71,9 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     created_at: "2024-01-01",
     last_updated: "2024-01-01",
-    category: "historicSites"
+    category: "historicSites",
+    latitude: 30.2658,
+    longitude: -97.7474
   },
   {
     id: "3",
@@ -89,7 +95,9 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     created_at: "2024-01-01",
     last_updated: "2024-01-01",
-    category: "publicArt"
+    category: "publicArt",
+    latitude: 30.2489,
+    longitude: -97.7501
   },
   {
     id: "4",
@@ -107,7 +115,9 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     created_at: "2024-01-01",
     last_updated: "2024-01-01",
-    category: "parksAndNature"
+    category: "parksAndNature",
+    latitude: 30.2766,
+    longitude: -97.7514
   },
   {
     id: "5",
@@ -125,7 +135,9 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     created_at: "2024-01-01",
     last_updated: "2024-01-01",
-    category: "parksAndNature"
+    category: "parksAndNature",
+    latitude: 30.2565,
+    longitude: -97.7141
   },
   {
     id: "6",
@@ -143,7 +155,9 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     created_at: "2024-01-01",
     last_updated: "2024-01-01",
-    category: "publicArt"
+    category: "publicArt",
+    latitude: 30.2539,
+    longitude: -97.7550
   },
   {
     id: "7",
@@ -161,7 +175,9 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     created_at: "2024-01-01",
     last_updated: "2024-01-01",
-    category: "parksAndNature"
+    category: "parksAndNature",
+    latitude: 30.2616,
+    longitude: -97.7450
   },
   {
     id: "8",
@@ -179,7 +195,9 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     created_at: "2024-01-01",
     last_updated: "2024-01-01",
-    category: "historicSites"
+    category: "historicSites",
+    latitude: 30.2747,
+    longitude: -97.7404
   },
   {
     id: "9",
@@ -197,7 +215,9 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     created_at: "2024-01-01",
     last_updated: "2024-01-01",
-    category: "businesses"
+    category: "businesses",
+    latitude: 30.2701,
+    longitude: -97.7313
   },
   {
     id: "10",
@@ -215,7 +235,9 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     created_at: "2024-01-01",
     last_updated: "2024-01-01",
-    category: "businesses"
+    category: "businesses",
+    latitude: 30.2726,
+    longitude: -97.7526
   }
 ];
 

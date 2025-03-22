@@ -12,18 +12,33 @@ export interface Tweet {
 
 export interface Comment {
   id: string;
-  tweetId: string;
   userName: string;
   content: string;
   createdAt: Date;
 }
 
-// Initialize tweets array
+// Initialize tweets array with empty arrays for comments
 let tweets: Tweet[] = [];
 
-// Get all tweets sorted by creation date (newest first)
+// Get all tweets
 export function getAllTweets(): Tweet[] {
-  return [...tweets].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  return tweets;
+}
+
+// Add a new tweet
+export function addTweet({ agentId, content }: { agentId: string; content: string }): Tweet {
+  const newTweet: Tweet = {
+    id: Math.random().toString(36).substring(2, 15),
+    agentId,
+    content,
+    createdAt: new Date(),
+    likes: 0,
+    comments: [],
+    shares: 0
+  };
+  
+  tweets.push(newTweet);
+  return newTweet;
 }
 
 // Get tweets for a specific agent
@@ -33,53 +48,38 @@ export function getTweetsByAgent(agentId: string): Tweet[] {
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 }
 
-// Add a new tweet
-export function addTweet(tweet: Omit<Tweet, 'id' | 'createdAt' | 'likes' | 'comments' | 'shares'>): Tweet {
-  const newTweet: Tweet = {
-    id: Math.random().toString(36).substring(2, 15),
-    createdAt: new Date(),
-    likes: 0,
-    comments: [],
-    shares: 0,
-    ...tweet
-  };
-  
-  tweets.push(newTweet);
-  return newTweet;
-}
-
-// Like a tweet
-export function likeTweet(tweetId: string): Tweet | null {
-  const tweet = tweets.find(t => t.id === tweetId);
-  if (!tweet) return null;
-  
-  tweet.likes += 1;
-  return tweet;
-}
-
 // Add a comment to a tweet
-export function addComment(tweetId: string, comment: Omit<Comment, 'id' | 'tweetId' | 'createdAt'>): Comment | null {
+export function addComment(tweetId: string, userName: string, content: string): Comment {
   const tweet = tweets.find(t => t.id === tweetId);
-  if (!tweet) return null;
+  if (!tweet) {
+    throw new Error('Tweet not found');
+  }
   
   const newComment: Comment = {
-    id: `comment-${Date.now()}-${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`,
-    tweetId,
-    createdAt: new Date(),
-    ...comment
+    id: Math.random().toString(36).substring(2, 15),
+    userName,
+    content,
+    createdAt: new Date()
   };
   
   tweet.comments.push(newComment);
   return newComment;
 }
 
-// Share a tweet
-export function shareTweet(tweetId: string): Tweet | null {
+// Like a tweet
+export function likeTweet(tweetId: string): void {
   const tweet = tweets.find(t => t.id === tweetId);
-  if (!tweet) return null;
-  
-  tweet.shares += 1;
-  return tweet;
+  if (tweet) {
+    tweet.likes += 1;
+  }
+}
+
+// Share a tweet
+export function shareTweet(tweetId: string): void {
+  const tweet = tweets.find(t => t.id === tweetId);
+  if (tweet) {
+    tweet.shares += 1;
+  }
 }
 
 // Map of prompts for generating tweets for each agent type
