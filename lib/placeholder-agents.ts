@@ -310,27 +310,30 @@ function ensureUniqueSlug(baseSlug: string, existingAgents: PlaceholderAgent[]):
 }
 
 // Helper function to add a new agent
-export const addAgent = (agent: Omit<PlaceholderAgent, 'id' | 'created_at' | 'last_updated' | 'slug'>): PlaceholderAgent => {
+export function addAgent(agentData: Omit<PlaceholderAgent, 'slug' | 'id' | 'created_at' | 'last_updated'>): PlaceholderAgent {
+  // Generate a unique slug from the name
+  const slug = generateSlug(agentData.name);
+  
+  // Create the new agent with all required fields
   const newAgent: PlaceholderAgent = {
-    ...agent,
-    id: `agent-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`, // Generate a unique ID
+    ...agentData,
+    id: crypto.randomUUID(),
+    slug,
     created_at: new Date().toISOString(),
     last_updated: new Date().toISOString(),
-    slug: ensureUniqueSlug(generateSlug(agent.name), getAllAgents())
   };
+
+  // Get existing agents from localStorage
+  const existingAgents = getAllAgents();
   
-  try {
-    const currentAgents = getAllAgents();
-    const updatedAgents = [...currentAgents, newAgent];
-    
-    saveAgents(updatedAgents);
-    console.log('New agent created successfully:', newAgent);
-    return newAgent;
-  } catch (error) {
-    console.error('Error adding agent:', error);
-    throw error;
-  }
-};
+  // Add the new agent to the list
+  const updatedAgents = [...existingAgents, newAgent];
+  
+  // Save back to localStorage
+  saveAgents(updatedAgents);
+  
+  return newAgent;
+}
 
 // Helper function to get a placeholder agent by ID
 export function getAgentById(id: string): PlaceholderAgent | undefined {
@@ -346,40 +349,33 @@ export function getAgentById(id: string): PlaceholderAgent | undefined {
 }
 
 // Update an existing agent
-export function updateAgent(id: string, data: Partial<PlaceholderAgent>): PlaceholderAgent {
-  try {
-    // Get existing agents from localStorage
-    const storedAgents = getStoredAgents();
-    
-    // Find the agent to update (either in localStorage or in the defaults)
-    const agentToUpdate = getAgentById(id);
-    
-    if (!agentToUpdate) {
-      throw new Error(`Agent with ID ${id} not found`);
-    }
-    
-    // Create the updated agent
-    const updatedAgent: PlaceholderAgent = {
-      ...agentToUpdate,
-      ...data,
-      last_updated: new Date().toISOString()
-    };
-    
-    // Remove the old version from the stored agents (if it exists)
-    const filteredAgents = storedAgents.filter(agent => agent.id !== id);
-    
-    // Add the updated version
-    filteredAgents.push(updatedAgent);
-    
-    // Save back to localStorage using our helper
-    saveAgents(filteredAgents);
-    
-    console.log('Agent updated successfully:', updatedAgent);
-    return updatedAgent;
-  } catch (error) {
-    console.error('Error updating agent:', error);
-    throw error;
+export function updateAgent(id: string, agentData: Omit<PlaceholderAgent, 'id' | 'created_at' | 'last_updated' | 'slug'>): PlaceholderAgent {
+  // Get existing agents from localStorage
+  const existingAgents = getAllAgents();
+  
+  // Find the agent to update
+  const agentIndex = existingAgents.findIndex(a => a.id === id);
+  
+  if (agentIndex === -1) {
+    throw new Error('Agent not found');
   }
+
+  // Create updated agent with existing data and new data
+  const updatedAgent: PlaceholderAgent = {
+    ...existingAgents[agentIndex],
+    ...agentData,
+    last_updated: new Date().toISOString(),
+  };
+
+  // Update the agent in the list
+  const updatedAgents = existingAgents.map((agent, index) =>
+    index === agentIndex ? updatedAgent : agent
+  );
+  
+  // Save back to localStorage
+  saveAgents(updatedAgents);
+  
+  return updatedAgent;
 }
 
 // Helper to read stored agents from localStorage

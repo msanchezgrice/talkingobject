@@ -7,23 +7,19 @@ import { getAllAgents, PlaceholderAgent } from "@/lib/placeholder-agents";
 
 export default function DashboardPage() {
   const [agents, setAgents] = useState<PlaceholderAgent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
-    try {
-      // Load placeholder agents from our local data
-      const placeholderAgents = getAllAgents();
-      
-      // Filter to show only 10 agents initially
-      const filteredAgents = placeholderAgents.slice(0, 10);
-      setAgents(filteredAgents);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error loading agents:', err);
-      setError('Failed to load agents');
-      setLoading(false);
-    }
+    const loadAgents = () => {
+      const storedAgents = getAllAgents();
+      // Filter out inactive agents
+      const activeAgents = storedAgents.filter(agent => agent.is_active);
+      setAgents(activeAgents);
+      setIsLoading(false);
+    };
+
+    loadAgents();
   }, []);
 
   return (
@@ -56,7 +52,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {loading ? (
+        {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           </div>

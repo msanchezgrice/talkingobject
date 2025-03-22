@@ -18,7 +18,7 @@ export default function AgentCard({ agent }: AgentCardProps) {
   const qrUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/qrcode?data=${encodeURIComponent(agentUrl)}&format=png`;
   
   return (
-    <div className="bg-gray-900 rounded-lg shadow overflow-hidden border border-gray-800">
+    <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
       <div className="h-48 bg-gray-800 relative">
         {agent.image_url ? (
           <Image 
@@ -44,6 +44,18 @@ export default function AgentCard({ agent }: AgentCardProps) {
             ? `${agent.personality.substring(0, 100)}...` 
             : agent.personality}
         </p>
+        
+        <div className="space-y-2">
+          <div>
+            <h4 className="text-sm font-medium text-gray-400">Likes</h4>
+            <p className="text-gray-300 text-sm">{agent.likes.join(', ')}</p>
+          </div>
+          
+          <div>
+            <h4 className="text-sm font-medium text-gray-400">Dislikes</h4>
+            <p className="text-gray-300 text-sm">{agent.dislikes.join(', ')}</p>
+          </div>
+        </div>
         
         {showQR ? (
           <div className="mb-4">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { PlaceholderAgent, addAgent, updateAgent, PUBLIC_USER_ID } from '@/lib/placeholder-agents';
 
 // Data sources available to agents
@@ -52,10 +52,31 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
     dislikes: agent?.dislikes || [],
     fun_facts: agent?.fun_facts || [],
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(agent?.image_url || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev: AgentFormData) => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setImagePreview(result);
+        setFormData(prev => ({ ...prev, image_url: result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setFormData(prev => ({ ...prev, image_url: url }));
+    setImagePreview(url);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -175,18 +196,69 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
       </div>
 
       <div>
-        <label htmlFor="image_url" className="block text-sm font-medium text-gray-200">
-          Image URL
+        <label htmlFor="image" className="block text-sm font-medium text-gray-200">
+          Agent Image
         </label>
-        <input
-          type="text"
-          name="image_url"
-          id="image_url"
-          value={formData.image_url}
-          onChange={handleChange}
-          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-          placeholder="URL to agent's image"
-        />
+        <div className="mt-2 space-y-4">
+          {imagePreview && (
+            <div className="relative w-32 h-32">
+              <img
+                src={imagePreview}
+                alt="Agent preview"
+                className="w-full h-full object-cover rounded-md"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setImagePreview(null);
+                  setFormData(prev => ({ ...prev, image_url: '' }));
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                  }
+                }}
+                className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+              >
+                ×
+              </button>
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              id="image"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+            <label
+              htmlFor="image"
+              className="block w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white text-center cursor-pointer hover:bg-gray-700"
+            >
+              Upload Image
+            </label>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-700"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-900 text-gray-400">Or</span>
+              </div>
+            </div>
+            
+            <input
+              type="text"
+              name="image_url"
+              id="image_url"
+              value={formData.image_url}
+              onChange={handleImageUrlChange}
+              className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+              placeholder="Enter image URL"
+            />
+          </div>
+        </div>
       </div>
 
       <div>
