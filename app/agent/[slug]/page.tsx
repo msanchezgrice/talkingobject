@@ -1,57 +1,48 @@
 import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import { getAgentBySlug } from '@/lib/placeholder-agents';
 import ClientAgentPage from './ClientAgentPage';
 
-// Generate dynamic metadata for each agent
-export async function generateMetadata({
-  params,
-}: {
-  params: { slug: string };
-}): Promise<Metadata> {
-  const slug = params.slug;
-  const agent = getAgentBySlug(slug);
+interface PageProps {
+  params: {
+    slug: string;
+  };
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const agent = getAgentBySlug(params.slug);
   
   if (!agent) {
     return {
-      title: 'Agent Not Found | Talking Objects',
+      title: 'Agent Not Found',
       description: 'The requested agent could not be found.'
     };
   }
-  
-  // Truncate description if too long
-  const shortDescription = agent.description && agent.description.length > 150 
-    ? `${agent.description.substring(0, 147)}...` 
-    : agent.description;
-  
+
   return {
-    title: `${agent.name} | Talking Objects`,
-    description: `Chat with ${agent.name} now! ${shortDescription || ''}`,
+    title: `${agent.name} - Talking Objects`,
+    description: agent.description,
     openGraph: {
-      title: `${agent.name} | Talking Objects`,
-      description: `Chat with ${agent.name} now!`,
-      images: [{ url: `/api/og?slug=${slug}`, width: 1200, height: 630 }]
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${agent.name} | Talking Objects`,
-      description: `Chat with ${agent.name} now!`,
-      images: [`/api/og?slug=${slug}`],
+      title: agent.name,
+      description: agent.description,
+      images: [agent.image_url],
     },
   };
 }
 
-// Fixed page component with proper typing
-interface PageProps {
-  params: { slug: string }
-}
-
-export default async function Page({ params }: PageProps) {
-  const slug = params.slug;
-  const agent = getAgentBySlug(slug);
+export default function AgentPage({ params }: PageProps) {
+  const agent = getAgentBySlug(params.slug);
   
   if (!agent) {
-    return notFound();
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900">Agent Not Found</h1>
+            <p className="mt-2 text-gray-600">The requested agent could not be found.</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return <ClientAgentPage agent={agent} />;

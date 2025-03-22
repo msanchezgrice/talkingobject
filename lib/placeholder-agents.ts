@@ -17,6 +17,10 @@ export interface PlaceholderAgent {
   last_updated: string;
   slug: string;
   is_active: boolean;
+  user_id: string;
+  data_sources: string[];
+  latitude: number;
+  longitude: number;
 }
 
 export const PUBLIC_USER_ID = '00000000-0000-0000-0000-000000000000';
@@ -50,11 +54,16 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     image_url: getPlaceholderImage('1'),
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
     user_id: PUBLIC_USER_ID,
     data_sources: ['events'],
     latitude: 30.2643,
-    longitude: -97.7505
+    longitude: -97.7505,
+    coordinates: '30.2643,-97.7505',
+    twitter_handle: '',
+    dislikes: [],
+    fun_facts: [],
+    location: 'Auditorium Shores, Lady Bird Lake',
   },
   {
     id: '2',
@@ -66,11 +75,16 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     image_url: getPlaceholderImage('2'),
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
     user_id: PUBLIC_USER_ID,
     data_sources: ['events', 'news'],
     latitude: 30.2649,
-    longitude: -97.7466
+    longitude: -97.7466,
+    coordinates: '30.2649,-97.7466',
+    twitter_handle: '',
+    dislikes: [],
+    fun_facts: [],
+    location: 'ACL Live at the Moody Theater',
   },
   {
     id: '3',
@@ -82,11 +96,16 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     image_url: getPlaceholderImage('3'),
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
     user_id: PUBLIC_USER_ID,
     data_sources: [],
     latitude: 30.2489,
-    longitude: -97.7501
+    longitude: -97.7501,
+    coordinates: '30.2489,-97.7501',
+    twitter_handle: '',
+    dislikes: [],
+    fun_facts: [],
+    location: 'Jo\'s Coffee, South Congress',
   },
   {
     id: '4',
@@ -98,11 +117,16 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     image_url: getPlaceholderImage('4'),
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
     user_id: PUBLIC_USER_ID,
     data_sources: ['weather'],
     latitude: 30.2767,
-    longitude: -97.7569
+    longitude: -97.7569,
+    coordinates: '30.2767,-97.7569',
+    twitter_handle: '',
+    dislikes: [],
+    fun_facts: [],
+    location: 'Treaty Oak Park',
   },
   {
     id: '5',
@@ -114,11 +138,16 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     image_url: getPlaceholderImage('5'),
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
     user_id: PUBLIC_USER_ID,
     data_sources: ['weather'],
     latitude: 30.2642,
-    longitude: -97.7531
+    longitude: -97.7531,
+    coordinates: '30.2642,-97.7531',
+    twitter_handle: '',
+    dislikes: [],
+    fun_facts: [],
+    location: 'Lady Bird Lake',
   },
   {
     id: '6',
@@ -130,11 +159,16 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     image_url: getPlaceholderImage('6'),
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
     user_id: PUBLIC_USER_ID,
     data_sources: [],
     latitude: 30.2539,
-    longitude: -97.7540
+    longitude: -97.7540,
+    coordinates: '30.2539,-97.7540',
+    twitter_handle: '',
+    dislikes: [],
+    fun_facts: [],
+    location: 'Roadhouse Relics, South First Street',
   },
   {
     id: '7',
@@ -146,11 +180,16 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     image_url: getPlaceholderImage('7'),
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
     user_id: PUBLIC_USER_ID,
     data_sources: ['weather', 'events'],
     latitude: 30.2614,
-    longitude: -97.7439
+    longitude: -97.7439,
+    coordinates: '30.2614,-97.7439',
+    twitter_handle: '',
+    dislikes: [],
+    fun_facts: [],
+    location: 'Congress Avenue Bridge',
   },
   {
     id: '8',
@@ -162,11 +201,16 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     image_url: getPlaceholderImage('8'),
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
     user_id: PUBLIC_USER_ID,
     data_sources: ['news', 'events'],
     latitude: 30.2747,
-    longitude: -97.7404
+    longitude: -97.7404,
+    coordinates: '30.2747,-97.7404',
+    twitter_handle: '',
+    dislikes: [],
+    fun_facts: [],
+    location: 'Downtown Austin',
   },
   {
     id: '9',
@@ -178,11 +222,16 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     image_url: getPlaceholderImage('9'),
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
     user_id: PUBLIC_USER_ID,
     data_sources: ['weather'],
     latitude: 30.2642,
-    longitude: -97.7713
+    longitude: -97.7713,
+    coordinates: '30.2642,-97.7713',
+    twitter_handle: '',
+    dislikes: [],
+    fun_facts: [],
+    location: 'Zilker Park',
   },
   {
     id: '10',
@@ -194,12 +243,17 @@ export const placeholderAgents: PlaceholderAgent[] = [
     is_active: true,
     image_url: getPlaceholderImage('10'),
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
     user_id: PUBLIC_USER_ID,
     data_sources: ['weather'],
     latitude: 30.3210,
-    longitude: -97.7731
-  }
+    longitude: -97.7731,
+    coordinates: '30.3210,-97.7731',
+    twitter_handle: '',
+    dislikes: [],
+    fun_facts: [],
+    location: 'Mount Bonnell Park',
+  },
 ];
 
 // Helper function to get all agents
@@ -234,13 +288,35 @@ export const saveAgents = (agents: PlaceholderAgent[]): void => {
   }
 };
 
+// Helper function to generate a URL-friendly slug
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+// Helper function to ensure slug uniqueness
+function ensureUniqueSlug(baseSlug: string, existingAgents: PlaceholderAgent[]): string {
+  let slug = baseSlug;
+  let counter = 1;
+  
+  while (existingAgents.some(agent => agent.slug === slug)) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+  
+  return slug;
+}
+
 // Helper function to add a new agent
-export const addAgent = (agent: Omit<PlaceholderAgent, 'id' | 'created_at' | 'updated_at'>): PlaceholderAgent => {
+export const addAgent = (agent: Omit<PlaceholderAgent, 'id' | 'created_at' | 'last_updated' | 'slug'>): PlaceholderAgent => {
   const newAgent: PlaceholderAgent = {
     ...agent,
     id: `agent-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`, // Generate a unique ID
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
+    slug: ensureUniqueSlug(generateSlug(agent.name), getAllAgents())
   };
   
   try {
@@ -286,7 +362,7 @@ export function updateAgent(id: string, data: Partial<PlaceholderAgent>): Placeh
     const updatedAgent: PlaceholderAgent = {
       ...agentToUpdate,
       ...data,
-      updated_at: new Date().toISOString()
+      last_updated: new Date().toISOString()
     };
     
     // Remove the old version from the stored agents (if it exists)
