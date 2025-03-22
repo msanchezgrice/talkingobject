@@ -18,11 +18,11 @@ export function AgentCard({ agent, onToggleActive }: AgentCardProps) {
   const router = useRouter();
 
   const handleEditClick = () => {
-    router.push(`/agents/${agent.slug}/edit`);
+    router.push(`/agent/${agent.slug}/edit`);
   };
 
   const handleViewClick = () => {
-    router.push(`/agents/${agent.slug}`);
+    router.push(`/agent/${agent.slug}`);
   };
 
   const handleToggleActive = () => {
