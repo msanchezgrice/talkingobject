@@ -90,13 +90,13 @@ export default function ExplorePage() {
                   <div className="p-4">
                     <h3 className="font-bold text-lg mb-1 text-white">{agent.name}</h3>
                     <p className="text-gray-400 text-sm mb-3">
-                      {agent.personality.length > 120 
-                        ? `${agent.personality.substring(0, 120)}...` 
-                        : agent.personality}
+                      {(agent as any).personality?.length > 120 
+                        ? `${(agent as any).personality.substring(0, 120)}...` 
+                        : (agent as any).personality || agent.description}
                     </p>
                     
                     <div className="flex flex-wrap gap-1 mb-4">
-                      {agent.data_sources && agent.data_sources.map((source) => (
+                      {(agent as any).data_sources?.map((source: string) => (
                         <span 
                           key={source} 
                           className="bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded"
