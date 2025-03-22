@@ -18,7 +18,7 @@ export interface Comment {
   createdAt: Date;
 }
 
-// In-memory storage for tweets
+// Initialize tweets array
 let tweets: Tweet[] = [];
 
 // Get all tweets sorted by creation date (newest first)

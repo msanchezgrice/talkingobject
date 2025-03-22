@@ -1,119 +1,87 @@
 'use client';
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { useState } from 'react';
-import type { Agent } from '@/lib/supabase/types';
-import type { PlaceholderAgent } from '@/lib/placeholder-agents';
+import { useRouter } from 'next/navigation';
+import { PlaceholderAgent } from '@/lib/placeholder-agents';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { VoicePlayer } from '@/components/VoicePlayer';
 
-// Type that can be either Agent from Supabase or our PlaceholderAgent
-type AgentCardProps = {
-  agent: Agent | PlaceholderAgent;
-};
+interface AgentCardProps {
+  agent: PlaceholderAgent;
+  onToggleActive?: (agentId: string, isActive: boolean) => void;
+}
 
-export default function AgentCard({ agent }: AgentCardProps) {
-  const [showQR, setShowQR] = useState(false);
-  
-  const agentUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/agent/${agent.slug}`;
-  const qrUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/qrcode?data=${encodeURIComponent(agentUrl)}&format=png`;
-  
+export function AgentCard({ agent, onToggleActive }: AgentCardProps) {
+  const router = useRouter();
+
+  const handleEditClick = () => {
+    router.push(`/agents/${agent.slug}/edit`);
+  };
+
+  const handleViewClick = () => {
+    router.push(`/agents/${agent.slug}`);
+  };
+
+  const handleToggleActive = () => {
+    onToggleActive?.(agent.id, !agent.is_active);
+  };
+
   return (
-    <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-      <div className="h-48 bg-gray-800 relative">
-        {agent.image_url ? (
-          <Image 
-            src={agent.image_url} 
-            alt={agent.name}
-            fill
-            style={{ objectFit: 'cover' }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-blue-900">
-            <span className="text-blue-200 text-2xl font-bold">{agent.name.charAt(0)}</span>
+    <Card className="flex flex-col">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Avatar>
+              <AvatarImage src={agent.image_url} alt={agent.name} />
+              <AvatarFallback>{agent.name[0]}</AvatarFallback>
+            </Avatar>
+            <div>
+              <CardTitle>{agent.name}</CardTitle>
+              <CardDescription>{agent.location}</CardDescription>
+            </div>
           </div>
-        )}
-        <div className="absolute bottom-0 left-0 bg-blue-600 text-white px-3 py-1">
-          Active
+          <Switch
+            checked={agent.is_active}
+            onCheckedChange={handleToggleActive}
+          />
         </div>
-      </div>
-      
-      <div className="p-4">
-        <h3 className="font-bold text-xl mb-2 text-white">{agent.name}</h3>
-        <p className="text-gray-400 mb-4">
-          {agent.personality.length > 100 
-            ? `${agent.personality.substring(0, 100)}...` 
-            : agent.personality}
-        </p>
-        
+      </CardHeader>
+      <CardContent className="flex-grow">
+        <p className="text-sm text-gray-600 mb-4">{agent.description}</p>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {agent.interests.map((interest, index) => (
+            <Badge key={index} variant="secondary">{interest}</Badge>
+          ))}
+        </div>
         <div className="space-y-2">
           <div>
-            <h4 className="text-sm font-medium text-gray-400">Likes</h4>
-            <p className="text-gray-300 text-sm">{agent.likes.join(', ')}</p>
+            <span className="text-sm font-medium">Likes:</span>
+            <span className="text-sm text-gray-600 ml-2">{agent.likes.join(', ')}</span>
           </div>
-          
           <div>
-            <h4 className="text-sm font-medium text-gray-400">Dislikes</h4>
-            <p className="text-gray-300 text-sm">{agent.dislikes.join(', ')}</p>
+            <span className="text-sm font-medium">Dislikes:</span>
+            <span className="text-sm text-gray-600 ml-2">{agent.dislikes.join(', ')}</span>
           </div>
         </div>
-        
-        {showQR ? (
-          <div className="mb-4">
-            <div className="bg-gray-800 p-2 border border-gray-700 rounded-md mb-2">
-              <Image 
-                src={qrUrl}
-                alt={`QR Code for ${agent.name}`}
-                width={200}
-                height={200}
-                className="mx-auto"
-              />
-            </div>
-            <p className="text-xs text-center text-gray-500 mb-2">{agentUrl}</p>
-            <button 
-              onClick={() => setShowQR(false)}
-              className="w-full text-center text-blue-400 hover:text-blue-300 text-sm"
-            >
-              Hide QR Code
-            </button>
-          </div>
-        ) : (
-          <div className="flex gap-2 mb-4">
-            <Link 
-              href={`/dashboard/edit/${agent.id}`}
-              className="bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded-md text-sm transition-colors text-gray-300"
-            >
-              Edit
-            </Link>
-            <Link 
-              href={`/agent/${agent.slug}`}
-              className="bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded-md text-sm transition-colors text-gray-300"
-            >
-              View
-            </Link>
-            <button 
-              onClick={() => setShowQR(true)}
-              className="bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded-md text-sm transition-colors text-gray-300"
-            >
-              QR Code
-            </button>
-          </div>
-        )}
-        
-        <div className="flex flex-wrap gap-1">
-          {agent.data_sources && agent.data_sources.length > 0 ? (
-            agent.data_sources.map((source) => (
-              <span 
-                key={source} 
-                className="bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded"
-              >
-                {source}
-              </span>
-            ))
-          ) : (
-            <span className="text-xs text-gray-500">No data sources</span>
-          )}
+      </CardContent>
+      <CardFooter className="flex justify-between items-center">
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleViewClick}>
+            View
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleEditClick}>
+            Edit
+          </Button>
         </div>
-      </div>
-    </div>
+        <VoicePlayer
+          text={`Hi, I'm ${agent.name}. ${agent.description}`}
+          category={agent.category}
+          agentId={agent.id}
+        />
+      </CardFooter>
+    </Card>
   );
 } 

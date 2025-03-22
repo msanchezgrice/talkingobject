@@ -8,18 +8,24 @@ import { getAllAgents, PlaceholderAgent } from "@/lib/placeholder-agents";
 export default function DashboardPage() {
   const [agents, setAgents] = useState<PlaceholderAgent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
-    const loadAgents = () => {
-      const storedAgents = getAllAgents();
-      // Filter out inactive agents
-      const activeAgents = storedAgents.filter(agent => agent.is_active);
-      setAgents(activeAgents);
-      setIsLoading(false);
-    };
+    try {
+      const loadAgents = () => {
+        const storedAgents = getAllAgents();
+        // Filter out inactive agents
+        const activeAgents = storedAgents.filter(agent => agent.is_active);
+        setAgents(activeAgents);
+      };
 
-    loadAgents();
+      loadAgents();
+    } catch (err) {
+      console.error('Error loading agents:', err);
+      setError('Failed to load agents');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   return (
@@ -48,7 +54,7 @@ export default function DashboardPage() {
 
         {error && (
           <div className="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded mb-4" role="alert">
-            Error loading agents: {error}
+            {error}
           </div>
         )}
 
