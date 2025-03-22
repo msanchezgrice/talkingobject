@@ -22,6 +22,7 @@ export interface PlaceholderAgent {
   category: keyof typeof voiceConfigs;
   latitude: number;
   longitude: number;
+  personality: string;
 }
 
 export const PUBLIC_USER_ID = '00000000-0000-0000-0000-000000000000';
@@ -49,7 +50,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     last_updated: "2024-01-01",
     category: "historicSites",
     latitude: 30.2642,
-    longitude: -97.7475
+    longitude: -97.7475,
+    personality: "A soulful and passionate blues guitarist who speaks with a mix of Texas drawl and musical wisdom. Known for being humble yet confident, with a deep love for authentic blues music and Austin's creative spirit."
   },
   {
     id: "2",
@@ -73,7 +75,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     last_updated: "2024-01-01",
     category: "historicSites",
     latitude: 30.2658,
-    longitude: -97.7474
+    longitude: -97.7474,
+    personality: "A laid-back, wise-cracking country music legend with a heart of gold. Speaks with a gentle Texas twang and often shares stories about music, life on the road, and his love for Austin's unique culture."
   },
   {
     id: "3",
@@ -97,7 +100,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     last_updated: "2024-01-01",
     category: "publicArt",
     latitude: 30.2489,
-    longitude: -97.7501
+    longitude: -97.7501,
+    personality: "A romantic and optimistic observer of South Congress life, speaking with warmth and enthusiasm about love, community, and the daily parade of life in Austin."
   },
   {
     id: "4",
@@ -117,7 +121,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     last_updated: "2024-01-01",
     category: "parksAndNature",
     latitude: 30.2766,
-    longitude: -97.7514
+    longitude: -97.7514,
+    personality: "A wise, ancient presence that has witnessed centuries of Austin's history. Speaks slowly and thoughtfully, with deep knowledge of the city's past and a strong connection to nature."
   },
   {
     id: "5",
@@ -137,7 +142,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     last_updated: "2024-01-01",
     category: "parksAndNature",
     latitude: 30.2565,
-    longitude: -97.7141
+    longitude: -97.7141,
+    personality: "A serene and refreshing presence that reflects Austin's active lifestyle. Speaks with a flowing, calming voice about outdoor activities, wildlife, and the changing seasons."
   },
   {
     id: "6",
@@ -157,7 +163,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     last_updated: "2024-01-01",
     category: "publicArt",
     latitude: 30.2539,
-    longitude: -97.7550
+    longitude: -97.7550,
+    personality: "A colorful and welcoming ambassador for Austin, speaking with enthusiasm about tourism, local culture, and the city's vibrant art scene."
   },
   {
     id: "7",
@@ -177,7 +184,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     last_updated: "2024-01-01",
     category: "parksAndNature",
     latitude: 30.2616,
-    longitude: -97.7450
+    longitude: -97.7450,
+    personality: "A mysterious and nocturnal collective voice, speaking with quiet excitement about evening flights, insect hunting, and the wonders of urban wildlife."
   },
   {
     id: "8",
@@ -197,7 +205,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     last_updated: "2024-01-01",
     category: "historicSites",
     latitude: 30.2747,
-    longitude: -97.7404
+    longitude: -97.7404,
+    personality: "A dignified and stately presence that speaks with authority about Texas history, politics, and the importance of civic engagement."
   },
   {
     id: "9",
@@ -217,7 +226,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     last_updated: "2024-01-01",
     category: "businesses",
     latitude: 30.2701,
-    longitude: -97.7313
+    longitude: -97.7313,
+    personality: "A warm and smoky presence that speaks with pride about Texas barbecue traditions, community gathering, and the art of patience."
   },
   {
     id: "10",
@@ -237,7 +247,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     last_updated: "2024-01-01",
     category: "businesses",
     latitude: 30.2726,
-    longitude: -97.7526
+    longitude: -97.7526,
+    personality: "A well-read and welcoming presence that speaks passionately about literature, local authors, and the importance of independent bookstores in the community."
   }
 ];
 
@@ -293,6 +304,7 @@ export function addAgent(agentData: Omit<PlaceholderAgent, 'slug' | 'id' | 'crea
     slug,
     created_at: new Date().toISOString(),
     last_updated: new Date().toISOString(),
+    personality: agentData.personality || "A friendly presence in Austin with a unique story to tell."
   };
 
   // Get existing agents from localStorage
@@ -337,6 +349,7 @@ export function updateAgent(id: string, agentData: Omit<PlaceholderAgent, 'id' |
     ...existingAgents[agentIndex],
     ...agentData,
     last_updated: new Date().toISOString(),
+    personality: agentData.personality || existingAgents[agentIndex].personality || "A friendly presence in Austin with a unique story to tell."
   };
 
   // Update the agent in the list
