@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { PlaceholderAgent, addAgent, updateAgent, PUBLIC_USER_ID } from '@/lib/placeholder-agents';
+import Image from 'next/image';
 
 // Data sources available to agents
 const dataSources = [
@@ -206,25 +207,14 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
         </label>
         <div className="mt-2 space-y-4">
           {imagePreview && (
-            <div className="relative w-32 h-32">
-              <img
+            <div className="relative h-40 w-40 mb-4">
+              <Image
                 src={imagePreview}
                 alt="Agent preview"
-                className="w-full h-full object-cover rounded-md"
+                fill
+                style={{ objectFit: 'cover' }}
+                className="rounded-lg"
               />
-              <button
-                type="button"
-                onClick={() => {
-                  setImagePreview(null);
-                  setFormData(prev => ({ ...prev, image_url: '' }));
-                  if (fileInputRef.current) {
-                    fileInputRef.current.value = '';
-                  }
-                }}
-                className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
-              >
-                ×
-              </button>
             </div>
           )}
           

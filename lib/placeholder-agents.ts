@@ -23,6 +23,7 @@ export interface PlaceholderAgent {
   latitude: number;
   longitude: number;
   personality: string;
+  data_sources: string[];
 }
 
 export const PUBLIC_USER_ID = '00000000-0000-0000-0000-000000000000';
@@ -51,7 +52,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     category: "historicSites",
     latitude: 30.2642,
     longitude: -97.7475,
-    personality: "A soulful and passionate blues guitarist who speaks with a mix of Texas drawl and musical wisdom. Known for being humble yet confident, with a deep love for authentic blues music and Austin's creative spirit."
+    personality: "A soulful and passionate blues guitarist who speaks with a mix of Texas drawl and musical wisdom. Known for being humble yet confident, with a deep love for authentic blues music and Austin's creative spirit.",
+    data_sources: []
   },
   {
     id: "2",
@@ -76,7 +78,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     category: "historicSites",
     latitude: 30.2658,
     longitude: -97.7474,
-    personality: "A laid-back, wise-cracking country music legend with a heart of gold. Speaks with a gentle Texas twang and often shares stories about music, life on the road, and his love for Austin's unique culture."
+    personality: "A laid-back, wise-cracking country music legend with a heart of gold. Speaks with a gentle Texas twang and often shares stories about music, life on the road, and his love for Austin's unique culture.",
+    data_sources: []
   },
   {
     id: "3",
@@ -101,7 +104,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     category: "publicArt",
     latitude: 30.2489,
     longitude: -97.7501,
-    personality: "A romantic and optimistic observer of South Congress life, speaking with warmth and enthusiasm about love, community, and the daily parade of life in Austin."
+    personality: "A romantic and optimistic observer of South Congress life, speaking with warmth and enthusiasm about love, community, and the daily parade of life in Austin.",
+    data_sources: []
   },
   {
     id: "4",
@@ -122,7 +126,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     category: "parksAndNature",
     latitude: 30.2766,
     longitude: -97.7514,
-    personality: "A wise, ancient presence that has witnessed centuries of Austin's history. Speaks slowly and thoughtfully, with deep knowledge of the city's past and a strong connection to nature."
+    personality: "A wise, ancient presence that has witnessed centuries of Austin's history. Speaks slowly and thoughtfully, with deep knowledge of the city's past and a strong connection to nature.",
+    data_sources: []
   },
   {
     id: "5",
@@ -143,7 +148,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     category: "parksAndNature",
     latitude: 30.2565,
     longitude: -97.7141,
-    personality: "A serene and refreshing presence that reflects Austin's active lifestyle. Speaks with a flowing, calming voice about outdoor activities, wildlife, and the changing seasons."
+    personality: "A serene and refreshing presence that reflects Austin's active lifestyle. Speaks with a flowing, calming voice about outdoor activities, wildlife, and the changing seasons.",
+    data_sources: []
   },
   {
     id: "6",
@@ -164,7 +170,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     category: "publicArt",
     latitude: 30.2539,
     longitude: -97.7550,
-    personality: "A colorful and welcoming ambassador for Austin, speaking with enthusiasm about tourism, local culture, and the city's vibrant art scene."
+    personality: "A colorful and welcoming ambassador for Austin, speaking with enthusiasm about tourism, local culture, and the city's vibrant art scene.",
+    data_sources: []
   },
   {
     id: "7",
@@ -185,7 +192,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     category: "parksAndNature",
     latitude: 30.2616,
     longitude: -97.7450,
-    personality: "A mysterious and nocturnal collective voice, speaking with quiet excitement about evening flights, insect hunting, and the wonders of urban wildlife."
+    personality: "A mysterious and nocturnal collective voice, speaking with quiet excitement about evening flights, insect hunting, and the wonders of urban wildlife.",
+    data_sources: []
   },
   {
     id: "8",
@@ -206,7 +214,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     category: "historicSites",
     latitude: 30.2747,
     longitude: -97.7404,
-    personality: "A dignified and stately presence that speaks with authority about Texas history, politics, and the importance of civic engagement."
+    personality: "A dignified and stately presence that speaks with authority about Texas history, politics, and the importance of civic engagement.",
+    data_sources: []
   },
   {
     id: "9",
@@ -227,7 +236,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     category: "businesses",
     latitude: 30.2701,
     longitude: -97.7313,
-    personality: "A warm and smoky presence that speaks with pride about Texas barbecue traditions, community gathering, and the art of patience."
+    personality: "A warm and smoky presence that speaks with pride about Texas barbecue traditions, community gathering, and the art of patience.",
+    data_sources: []
   },
   {
     id: "10",
@@ -248,7 +258,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     category: "businesses",
     latitude: 30.2726,
     longitude: -97.7526,
-    personality: "A well-read and welcoming presence that speaks passionately about literature, local authors, and the importance of independent bookstores in the community."
+    personality: "A well-read and welcoming presence that speaks passionately about literature, local authors, and the importance of independent bookstores in the community.",
+    data_sources: []
   }
 ];
 
@@ -304,7 +315,8 @@ export function addAgent(agentData: Omit<PlaceholderAgent, 'slug' | 'id' | 'crea
     slug,
     created_at: new Date().toISOString(),
     last_updated: new Date().toISOString(),
-    personality: agentData.personality || "A friendly presence in Austin with a unique story to tell."
+    personality: agentData.personality || "A friendly presence in Austin with a unique story to tell.",
+    data_sources: []
   };
 
   // Get existing agents from localStorage
@@ -349,7 +361,8 @@ export function updateAgent(id: string, agentData: Omit<PlaceholderAgent, 'id' |
     ...existingAgents[agentIndex],
     ...agentData,
     last_updated: new Date().toISOString(),
-    personality: agentData.personality || existingAgents[agentIndex].personality || "A friendly presence in Austin with a unique story to tell."
+    personality: agentData.personality || existingAgents[agentIndex].personality || "A friendly presence in Austin with a unique story to tell.",
+    data_sources: agentData.data_sources || existingAgents[agentIndex].data_sources || []
   };
 
   // Update the agent in the list
