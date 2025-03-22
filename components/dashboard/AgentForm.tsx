@@ -1,342 +1,291 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
-import { addAgent, updateAgent, PlaceholderAgent, PUBLIC_USER_ID } from '@/lib/placeholder-agents';
-import dynamic from 'next/dynamic';
-
-// Dynamically import LocationPicker to avoid SSR issues
-const LocationPicker = dynamic(() => import('@/components/map/LocationPicker'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-[400px] bg-gray-800 rounded-md flex items-center justify-center">
-      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
-    </div>
-  )
-});
+import { useState } from 'react';
+import { PlaceholderAgent, addAgent, updateAgent, PUBLIC_USER_ID } from '@/lib/placeholder-agents';
 
 // Data sources available to agents
-const DATA_SOURCES = [
+const dataSources = [
   { id: 'weather', name: 'Weather', description: 'Access current weather conditions and forecasts for the agent\'s location.' },
   { id: 'news', name: 'News', description: 'Access recent news relevant to the agent\'s location or topic.' },
   { id: 'events', name: 'Local Events', description: 'Access information about events happening near the agent\'s location.' },
   { id: 'stocks', name: 'Stock Prices', description: 'Access current stock market data and financial information.' }
-];
+] as const;
+
+type DataSource = typeof dataSources[number];
+
+interface AgentFormData {
+  name: string;
+  personality: string;
+  description: string;
+  interests: string[];
+  is_active: boolean;
+  latitude: number;
+  longitude: number;
+  image_url: string;
+  data_sources: string[];
+  location: string;
+  coordinates: string;
+  twitter_handle: string;
+  dislikes: string[];
+  fun_facts: string[];
+}
 
 type AgentFormProps = {
-  agent?: PlaceholderAgent; // If provided, we're editing an existing agent
+  agent?: PlaceholderAgent;
+  onSubmit: () => void;
 };
 
-export default function AgentForm({ agent }: AgentFormProps = {}) {
-  const isEditing = !!agent;
-  const router = useRouter();
-  
-  // Form state
-  const [name, setName] = useState(agent?.name || '');
-  const [slug, setSlug] = useState(agent?.slug || '');
-  const [personality, setPersonality] = useState(agent?.personality || '');
-  const [latitude, setLatitude] = useState(agent?.latitude?.toString() || '');
-  const [longitude, setLongitude] = useState(agent?.longitude?.toString() || '');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(agent?.image_url || null);
-  const [selectedDataSources, setSelectedDataSources] = useState<string[]>(agent?.data_sources || []);
-  const [showMap, setShowMap] = useState(false);
-  
-  // Form processing state
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Generate slug from name
-  useEffect(() => {
-    if (!isEditing && name && !slug) {
-      setSlug(name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
-    }
-  }, [name, slug, isEditing]);
-  
-  // Handle image selection
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    setImageFile(file);
-    
-    // Create a preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-  
-  // Toggle data source selection
-  const toggleDataSource = (sourceId: string) => {
-    if (selectedDataSources.includes(sourceId)) {
-      setSelectedDataSources(selectedDataSources.filter(id => id !== sourceId));
-    } else {
-      setSelectedDataSources([...selectedDataSources, sourceId]);
-    }
-  };
-  
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Validate inputs
-      if (!name || !slug || !personality) {
-        throw new Error('Please fill in all required fields');
-      }
-      
-      // Use our public user ID
-      const publicUserId = PUBLIC_USER_ID;
-      
-      let imageUrl = agent?.image_url || undefined;
-      
-      // Use placeholder image
-      if (imageFile) {
-        imageUrl = '/images/placeholder.jpg';
-      }
-      
-      // Prepare agent data
-      const agentData = {
-        name,
-        slug,
-        personality,
-        description: personality, // Use personality as description too
-        interests: ['custom'], // Default interests
-        is_active: true,
-        latitude: latitude ? parseFloat(latitude) : undefined,
-        longitude: longitude ? parseFloat(longitude) : undefined,
-        image_url: imageUrl,
-        data_sources: selectedDataSources,
-        user_id: publicUserId
-      };
-      
-      if (isEditing && agent) {
-        // For editing, update the agent in localStorage
-        const updatedAgent = updateAgent(agent.id, agentData);
-        console.log('Updated agent:', updatedAgent);
-      } else {
-        // For creating a new agent, add it to localStorage
-        const newAgent = addAgent(agentData);
-        console.log('Created new agent:', newAgent);
-      }
-      
-      // Navigate back to dashboard
-      router.push('/dashboard');
-      
-    } catch (err: unknown) {
-      let errorMessage = 'An error occurred while saving the agent';
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      setError(errorMessage);
-      console.error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  return (
-    <form onSubmit={handleSubmit} className="bg-gray-900 text-white shadow-md rounded-lg p-6">
-      {error && (
-        <div className="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded mb-6" role="alert">
-          {error}
-        </div>
-      )}
-      
-      <div className="mb-8">
-        <h3 className="text-lg font-medium mb-4 pb-2 border-b border-gray-700">Basic Information</h3>
-        
-        <div className="mb-4">
-          <label htmlFor="name" className="block text-sm font-medium mb-1 text-gray-300">Agent Name*</label>
-          <input 
-            type="text" 
-            id="name" 
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-            placeholder="E.g., Coffee Shop Guide"
-            required
-          />
-        </div>
+export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
+  const [formData, setFormData] = useState<AgentFormData>({
+    name: agent?.name || '',
+    personality: agent?.personality || '',
+    description: agent?.description || '',
+    interests: agent?.interests || [],
+    is_active: agent?.is_active ?? true,
+    latitude: agent?.latitude || 30.2672,
+    longitude: agent?.longitude || -97.7431,
+    image_url: agent?.image_url || '/images/placeholder.jpg',
+    data_sources: agent?.data_sources || [],
+    location: agent?.location || 'Austin, TX',
+    coordinates: agent?.coordinates || '30.2672,-97.7431',
+    twitter_handle: agent?.twitter_handle || '',
+    dislikes: agent?.dislikes || [],
+    fun_facts: agent?.fun_facts || [],
+  });
 
-        <div className="mb-4">
-          <label htmlFor="slug" className="block text-sm font-medium mb-1 text-gray-300">URL Slug*</label>
-          <div className="flex items-center">
-            <span className="text-gray-500 mr-1">{process.env.NEXT_PUBLIC_BASE_URL}/agent/</span>
-            <input 
-              type="text" 
-              id="slug" 
-              value={slug}
-              onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''))}
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev: AgentFormData) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const agentData = {
+      name: formData.name,
+      personality: formData.personality,
+      description: formData.description,
+      interests: formData.interests,
+      is_active: formData.is_active,
+      latitude: formData.latitude,
+      longitude: formData.longitude,
+      image_url: formData.image_url || '/images/placeholder.jpg',
+      data_sources: formData.data_sources,
+      location: formData.location,
+      coordinates: formData.coordinates,
+      twitter_handle: formData.twitter_handle,
+      dislikes: formData.dislikes,
+      fun_facts: formData.fun_facts,
+      user_id: PUBLIC_USER_ID,
+    };
+
+    if (agent) {
+      // For updating an existing agent
+      updateAgent(agent.id, agentData);
+      console.log('Updated agent:', agentData);
+    } else {
+      // For creating a new agent, add it to localStorage
+      const newAgent = addAgent(agentData);
+      console.log('Created new agent:', newAgent);
+    }
+
+    onSubmit();
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-200">
+          Name
+        </label>
+        <input
+          type="text"
+          name="name"
+          id="name"
+          value={formData.name}
+          onChange={handleChange}
+          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+          placeholder="E.g., Coffee Shop Guide"
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="personality" className="block text-sm font-medium text-gray-200">
+          Personality
+        </label>
+        <textarea
+          name="personality"
+          id="personality"
+          value={formData.personality}
+          onChange={handleChange}
+          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white h-32"
+          placeholder="Describe your agent's personality, tone, and backstory..."
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="description" className="block text-sm font-medium text-gray-200">
+          Description
+        </label>
+        <textarea
+          name="description"
+          id="description"
+          value={formData.description}
+          onChange={handleChange}
+          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white h-32"
+          placeholder="Describe what your agent does and how it helps users..."
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-200">
+          Location
+        </label>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <input
+              type="number"
+              name="latitude"
+              id="latitude"
+              value={formData.latitude.toString()}
+              onChange={handleChange}
               className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-              placeholder="coffee-shop-guide"
+              placeholder="E.g., 30.2672"
+              step="any"
               required
             />
           </div>
-          <p className="text-sm text-gray-500 mt-1">This will be used for your agent&apos;s unique URL.</p>
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="personality" className="block text-sm font-medium mb-1 text-gray-300">Personality*</label>
-          <textarea 
-            id="personality" 
-            value={personality}
-            onChange={(e) => setPersonality(e.target.value)}
-            className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white h-32"
-            placeholder="Describe your agent's personality, tone, and backstory..."
-            required
-          ></textarea>
-        </div>
-      </div>
-
-      <div className="mb-8">
-        <h3 className="text-lg font-medium mb-4 pb-2 border-b border-gray-700">Location</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <label htmlFor="latitude" className="block text-sm font-medium mb-1 text-gray-300">Latitude</label>
-            <input 
-              type="text" 
-              id="latitude" 
-              value={latitude}
-              onChange={(e) => setLatitude(e.target.value)}
-              className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-              placeholder="E.g., 30.2672"
-            />
-          </div>
-          <div>
-            <label htmlFor="longitude" className="block text-sm font-medium mb-1 text-gray-300">Longitude</label>
-            <input 
-              type="text" 
-              id="longitude" 
-              value={longitude}
-              onChange={(e) => setLongitude(e.target.value)}
+            <input
+              type="number"
+              name="longitude"
+              id="longitude"
+              value={formData.longitude.toString()}
+              onChange={handleChange}
               className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
               placeholder="E.g., -97.7431"
+              step="any"
+              required
             />
           </div>
         </div>
-        
-        <div className="mt-2 mb-4">
-          <button
-            type="button"
-            onClick={() => setShowMap(!showMap)}
-            className="inline-flex items-center text-blue-400 hover:text-blue-300"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-            </svg>
-            {showMap ? 'Hide Map' : 'Find on Map'}
-          </button>
-        </div>
-        
-        {showMap && (
-          <div className="mb-4">
-            <LocationPicker
-              initialLatitude={latitude ? parseFloat(latitude) : undefined}
-              initialLongitude={longitude ? parseFloat(longitude) : undefined}
-              onLocationSelected={(lat: number, lng: number) => {
-                setLatitude(lat.toString());
-                setLongitude(lng.toString());
-              }}
-            />
-          </div>
-        )}
-        
-        <p className="text-sm text-gray-500 mt-2">
-          This location will be used to provide contextual information for your agent.
-        </p>
       </div>
 
-      <div className="mb-8">
-        <h3 className="text-lg font-medium mb-4 pb-2 border-b border-gray-700">Appearance</h3>
-        
-        <div className="mb-4">
-          <label htmlFor="image" className="block text-sm font-medium mb-1 text-gray-300">Agent Image</label>
-          
-          {imagePreview ? (
-            <div className="mb-4">
-              <div className="relative w-32 h-32 mx-auto mb-2 border rounded-md overflow-hidden">
-                <Image 
-                  src={imagePreview} 
-                  alt="Agent preview" 
-                  fill 
-                  style={{ objectFit: 'cover' }} 
-                />
-              </div>
-              <button 
-                type="button" 
-                onClick={() => { setImagePreview(null); setImageFile(null); }}
-                className="block mx-auto text-sm text-red-600 hover:underline"
-              >
-                Remove Image
-              </button>
-            </div>
-          ) : (
-            <div className="border-2 border-dashed border-gray-700 rounded-md p-4 text-center">
-              <p className="mb-2 text-gray-400">Drag and drop an image here, or click to select</p>
+      <div>
+        <label htmlFor="image_url" className="block text-sm font-medium text-gray-200">
+          Image URL
+        </label>
+        <input
+          type="text"
+          name="image_url"
+          id="image_url"
+          value={formData.image_url}
+          onChange={handleChange}
+          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+          placeholder="URL to agent's image"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-200">
+          Data Sources
+        </label>
+        <div className="space-y-2">
+          {dataSources.map((source: DataSource) => (
+            <label key={source.id} className="flex items-center space-x-2">
               <input
-                type="file"
-                id="image"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
+                type="checkbox"
+                value={source.id}
+                checked={formData.data_sources.includes(source.id)}
+                onChange={(e) => {
+                  const { value, checked } = e.target;
+                  setFormData((prev) => ({
+                    ...prev,
+                    data_sources: checked
+                      ? [...prev.data_sources, value]
+                      : prev.data_sources.filter((id) => id !== value),
+                  }));
+                }}
+                className="rounded border-gray-700 text-blue-500 focus:ring-blue-500"
               />
-              <label 
-                htmlFor="image"
-                className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm py-1 px-3 rounded-md cursor-pointer inline-block"
-              >
-                Upload Image
-              </label>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="mb-8">
-        <h3 className="text-lg font-medium mb-4 pb-2 border-b border-gray-700">External Data Sources</h3>
-        <p className="mb-4 text-sm text-gray-400">
-          Select which external data sources your agent can access to inform its responses.
-        </p>
-        
-        <div className="space-y-3">
-          {DATA_SOURCES.map((source) => (
-            <div key={source.id} className="flex items-start">
-              <input 
-                type="checkbox" 
-                id={source.id} 
-                checked={selectedDataSources.includes(source.id)}
-                onChange={() => toggleDataSource(source.id)}
-                className="mt-1 mr-2"
-              />
-              <div>
-                <label htmlFor={source.id} className="font-medium text-white">{source.name}</label>
-                <p className="text-sm text-gray-400">{source.description}</p>
-              </div>
-            </div>
+              <span className="text-gray-200">{source.name}</span>
+            </label>
           ))}
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 mt-8">
-        <Link 
-          href="/dashboard" 
-          className="border border-gray-700 hover:bg-gray-800 px-4 py-2 rounded-md transition-colors text-gray-300"
+      <div>
+        <label htmlFor="twitter_handle" className="block text-sm font-medium text-gray-200">
+          Twitter Handle
+        </label>
+        <input
+          type="text"
+          name="twitter_handle"
+          id="twitter_handle"
+          value={formData.twitter_handle}
+          onChange={handleChange}
+          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+          placeholder="@username"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="dislikes" className="block text-sm font-medium text-gray-200">
+          Dislikes
+        </label>
+        <textarea
+          name="dislikes"
+          id="dislikes"
+          value={formData.dislikes.join(', ')}
+          onChange={(e) => {
+            const dislikes = e.target.value.split(',').map((item) => item.trim()).filter(Boolean);
+            setFormData((prev) => ({ ...prev, dislikes }));
+          }}
+          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+          placeholder="Comma-separated list of things the agent dislikes"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="fun_facts" className="block text-sm font-medium text-gray-200">
+          Fun Facts
+        </label>
+        <textarea
+          name="fun_facts"
+          id="fun_facts"
+          value={formData.fun_facts.join(', ')}
+          onChange={(e) => {
+            const funFacts = e.target.value.split(',').map((item) => item.trim()).filter(Boolean);
+            setFormData((prev) => ({ ...prev, fun_facts: funFacts }));
+          }}
+          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+          placeholder="Comma-separated list of fun facts about the agent"
+        />
+      </div>
+
+      <div className="flex items-center">
+        <input
+          type="checkbox"
+          name="is_active"
+          id="is_active"
+          checked={formData.is_active}
+          onChange={(e) => setFormData((prev) => ({ ...prev, is_active: e.target.checked }))}
+          className="rounded border-gray-700 text-blue-500 focus:ring-blue-500"
+        />
+        <label htmlFor="is_active" className="ml-2 block text-sm text-gray-200">
+          Active
+        </label>
+      </div>
+
+      <div className="flex justify-end space-x-4">
+        <button
+          type="submit"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Cancel
-        </Link>
-        <button 
-          type="submit" 
-          disabled={loading}
-          className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-50"
-        >
-          {loading ? 'Saving...' : isEditing ? 'Update Agent' : 'Create Agent'}
+          {agent ? 'Update Agent' : 'Create Agent'}
         </button>
       </div>
     </form>
