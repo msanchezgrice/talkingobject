@@ -5,10 +5,20 @@ export type Agent = {
   slug: string;
   user_id: string;
   personality: string;
+  description: string;
   latitude: number;
   longitude: number;
   image_url: string | null;
   data_sources: string[];
+  location: string;
+  coordinates: string;
+  twitter_handle: string;
+  interests: string[];
+  likes: string[];
+  dislikes: string[];
+  fun_facts: string[];
+  is_active: boolean;
+  last_updated: string;
 };
 
 export type Profile = {
