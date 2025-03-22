@@ -37,6 +37,11 @@ export default function EditAgentPage() {
     }
   }, [params.id, router]);
 
+  const handleSubmit = () => {
+    // After successful submission, redirect to the dashboard
+    router.push('/dashboard');
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -65,7 +70,7 @@ export default function EditAgentPage() {
         <h2 className="text-2xl font-bold mt-4 text-white">Edit Agent: {agent?.name}</h2>
       </div>
 
-      {agent && <AgentForm agent={agent} />}
+      {agent && <AgentForm agent={agent} onSubmit={handleSubmit} />}
     </div>
   );
 } 
