@@ -18,6 +18,8 @@ interface AgentFormData {
   personality: string;
   description: string;
   interests: string[];
+  likes: string[];
+  dislikes: string[];
   is_active: boolean;
   latitude: number;
   longitude: number;
@@ -26,8 +28,8 @@ interface AgentFormData {
   location: string;
   coordinates: string;
   twitter_handle: string;
-  dislikes: string[];
   fun_facts: string[];
+  user_id: string;
 }
 
 type AgentFormProps = {
@@ -41,16 +43,18 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
     personality: agent?.personality || '',
     description: agent?.description || '',
     interests: agent?.interests || [],
-    is_active: agent?.is_active ?? true,
-    latitude: agent?.latitude || 30.2672,
-    longitude: agent?.longitude || -97.7431,
-    image_url: agent?.image_url || '/images/placeholder.jpg',
-    data_sources: agent?.data_sources || [],
-    location: agent?.location || 'Austin, TX',
-    coordinates: agent?.coordinates || '30.2672,-97.7431',
-    twitter_handle: agent?.twitter_handle || '',
+    likes: agent?.likes || [],
     dislikes: agent?.dislikes || [],
+    is_active: agent?.is_active ?? true,
+    latitude: agent?.latitude || 0,
+    longitude: agent?.longitude || 0,
+    image_url: agent?.image_url || '',
+    data_sources: agent?.data_sources || [],
+    location: agent?.location || '',
+    coordinates: agent?.coordinates || '',
+    twitter_handle: agent?.twitter_handle || '',
     fun_facts: agent?.fun_facts || [],
+    user_id: agent?.user_id || PUBLIC_USER_ID,
   });
   const [imagePreview, setImagePreview] = useState<string | null>(agent?.image_url || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -87,6 +91,8 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
       personality: formData.personality,
       description: formData.description,
       interests: formData.interests,
+      likes: formData.likes,
+      dislikes: formData.dislikes,
       is_active: formData.is_active,
       latitude: formData.latitude,
       longitude: formData.longitude,
@@ -95,9 +101,8 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
       location: formData.location,
       coordinates: formData.coordinates,
       twitter_handle: formData.twitter_handle,
-      dislikes: formData.dislikes,
       fun_facts: formData.fun_facts,
-      user_id: PUBLIC_USER_ID,
+      user_id: formData.user_id,
     };
 
     if (agent) {
@@ -305,19 +310,38 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
       </div>
 
       <div>
-        <label htmlFor="dislikes" className="block text-sm font-medium text-gray-200">
-          Dislikes
+        <label htmlFor="likes" className="block text-sm font-medium text-gray-200">
+          Likes (comma-separated)
         </label>
-        <textarea
+        <input
+          type="text"
+          name="likes"
+          id="likes"
+          value={formData.likes.join(', ')}
+          onChange={(e) => {
+            const likesArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
+            setFormData(prev => ({ ...prev, likes: likesArray }));
+          }}
+          className="mt-1 block w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+          placeholder="Enter likes separated by commas"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="dislikes" className="block text-sm font-medium text-gray-200">
+          Dislikes (comma-separated)
+        </label>
+        <input
+          type="text"
           name="dislikes"
           id="dislikes"
           value={formData.dislikes.join(', ')}
           onChange={(e) => {
-            const dislikes = e.target.value.split(',').map((item) => item.trim()).filter(Boolean);
-            setFormData((prev) => ({ ...prev, dislikes }));
+            const dislikesArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
+            setFormData(prev => ({ ...prev, dislikes: dislikesArray }));
           }}
-          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-          placeholder="Comma-separated list of things the agent dislikes"
+          className="mt-1 block w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+          placeholder="Enter dislikes separated by commas"
         />
       </div>
 
