@@ -24,24 +24,6 @@ export interface PlaceholderAgent {
 
 export const PUBLIC_USER_ID = '00000000-0000-0000-0000-000000000000';
 
-// Use local placeholder images instead of external URLs
-const getPlaceholderImage = (id: string) => {
-  const imageMap: Record<string, string> = {
-    '1': '/images/austin/stevie-ray-vaughan.jpg',
-    '2': '/images/austin/willie-nelson.jpg',
-    '3': '/images/austin/i-love-you-so-much.jpg',
-    '4': '/images/austin/treaty-oak.jpg',
-    '5': '/images/austin/pfluger-bridge.jpg',
-    '6': '/images/austin/greetings-from-austin.jpg',
-    '7': '/images/austin/congress-bats.jpg',
-    '8': '/images/austin/texas-capitol.jpg',
-    '9': '/images/austin/barton-springs.jpg',
-    '10': '/images/austin/mount-bonnell.jpg',
-  };
-  
-  return imageMap[id] || `/images/placeholder.jpg`;
-};
-
 export const placeholderAgents: PlaceholderAgent[] = [
   {
     id: "1",

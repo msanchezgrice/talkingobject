@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import AgentCard from "@/components/dashboard/AgentCard";
+import { AgentCard } from "@/components/dashboard/AgentCard";
 import { getAllAgents, PlaceholderAgent } from "@/lib/placeholder-agents";
 
 export default function DashboardPage() {
