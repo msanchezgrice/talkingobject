@@ -2,7 +2,7 @@
 export const voiceConfigs = {
   historicSites: {
     stevieRayVaughan: {
-      voice_id: "VR6AewLTigWG4xSOukaG", // Adam - warm, Texan male voice
+      voice_id: "VR6AewLTigWG4xSOukaG", // Adam - warm, Texan male voice with southern accent
       settings: {
         stability: 0.85,
         similarity_boost: 0.85
@@ -25,21 +25,21 @@ export const voiceConfigs = {
   },
   parksAndNature: {
     bartonSprings: {
-      voice_id: "EXAVITQu4vr4xnSDxMaL", // Bella - soothing female voice
+      voice_id: "EXAVITQu4vr4xnSDxMaL", // Bella - soothing, gentle female voice
       settings: {
         stability: 0.80,
         similarity_boost: 0.70
       }
     },
     ladyBirdLake: {
-      voice_id: "EXAVITQu4vr4xnSDxMaL", // Bella - soothing female voice
+      voice_id: "EXAVITQu4vr4xnSDxMaL", // Bella - soothing, gentle female voice
       settings: {
         stability: 0.80,
         similarity_boost: 0.70
       }
     },
     congressBridgeBats: {
-      voice_id: "pNInz6obpgDQGcFmaJgB", // Rachel - gentle female voice
+      voice_id: "pNInz6obpgDQGcFmaJgB", // Rachel - gentle, informative female voice
       settings: {
         stability: 0.75,
         similarity_boost: 0.75
@@ -62,7 +62,7 @@ export const voiceConfigs = {
       }
     },
     greetingsFromAustin: {
-      voice_id: "yoZ06aMxZJJ28mfd3POQ", // Sam - energetic male voice
+      voice_id: "yoZ06aMxZJJ28mfd3POQ", // Sam - energetic, enthusiastic male voice
       settings: {
         stability: 0.65,
         similarity_boost: 0.75
@@ -71,7 +71,7 @@ export const voiceConfigs = {
   },
   businesses: {
     franklinBarbecue: {
-      voice_id: "VR6AewLTigWG4xSOukaG", // Adam - warm, Texan male voice
+      voice_id: "VR6AewLTigWG4xSOukaG", // Adam - warm, Texan male voice with southern accent
       settings: {
         stability: 0.75,
         similarity_boost: 0.75

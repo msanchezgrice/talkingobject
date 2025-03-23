@@ -40,7 +40,7 @@ export default function ExplorePage() {
   }, []);
 
   const filteredAgents = selectedCategory
-    ? agents.filter(agent => agent.category === selectedCategory)
+    ? agents.filter(agent => agent.category.toLowerCase() === selectedCategory.toLowerCase())
     : agents;
 
   if (loading) {
