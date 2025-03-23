@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { VoicePlayer } from '@/components/VoicePlayer';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 type Category = keyof typeof voiceConfigs;
 
@@ -19,9 +20,13 @@ const categories: { id: Category; label: string }[] = [
 
 export default function ExplorePage() {
   const [agents, setAgents] = useState<PlaceholderAgent[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>('historicSites');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Get category from URL or default to 'historicSites'
+  const selectedCategory = (searchParams.get('category') as Category) || 'historicSites';
 
   useEffect(() => {
     const loadAgents = () => {
@@ -42,6 +47,14 @@ export default function ExplorePage() {
   const filteredAgents = selectedCategory
     ? agents.filter(agent => agent.category === selectedCategory)
     : agents;
+
+  const handleCategoryChange = (category: Category | null) => {
+    if (category) {
+      router.push(`/explore?category=${category}`);
+    } else {
+      router.push('/explore');
+    }
+  };
 
   if (loading) {
     return (
@@ -79,9 +92,9 @@ export default function ExplorePage() {
         <div className="flex justify-center mb-8">
           <div className="flex gap-2 p-1 bg-gray-800 rounded-lg">
             <button
-              onClick={() => setSelectedCategory(null)}
+              onClick={() => handleCategoryChange(null)}
               className={`px-4 py-2 rounded-md transition-colors ${
-                selectedCategory === null
+                !selectedCategory
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-400 hover:text-white'
               }`}
@@ -91,7 +104,7 @@ export default function ExplorePage() {
             {categories.map(category => (
               <button
                 key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => handleCategoryChange(category.id)}
                 className={`px-4 py-2 rounded-md transition-colors ${
                   selectedCategory === category.id
                     ? 'bg-blue-600 text-white'
