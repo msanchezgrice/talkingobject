@@ -1,134 +1,171 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { PlaceholderAgent, getAllAgents } from '@/lib/placeholder-agents';
+import { voiceConfigs } from '@/lib/voices';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
-import { getAllAgents, PlaceholderAgent } from '@/lib/placeholder-agents';
+import { VoicePlayer } from '@/components/VoicePlayer';
+
+type Category = keyof typeof voiceConfigs;
+
+const categories: { id: Category; label: string }[] = [
+  { id: 'historicSites', label: 'Historic Sites' },
+  { id: 'parksAndNature', label: 'Parks & Nature' },
+  { id: 'publicArt', label: 'Public Art' },
+  { id: 'businesses', label: 'Businesses' }
+];
 
 export default function ExplorePage() {
   const [agents, setAgents] = useState<PlaceholderAgent[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   useEffect(() => {
-    try {
-      // Get all placeholder agents (limited to 50)
-      const placeholderAgents = getAllAgents().slice(0, 50);
-      setAgents(placeholderAgents);
-      setLoading(false);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'An error occurred');
-      setLoading(false);
-    }
+    const loadAgents = () => {
+      try {
+        const allAgents = getAllAgents();
+        setAgents(allAgents.filter(agent => agent.is_active));
+      } catch (err) {
+        console.error('Error loading agents:', err);
+        setError('Failed to load agents');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAgents();
   }, []);
-  
-  return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex justify-between items-start">
-          <div>
-            <h2 className="text-2xl font-bold">Explore Agents</h2>
-            <p className="text-gray-400 mt-2">
-              Discover interactive AI agents created by the Talking Objects community
-            </p>
+
+  const filteredAgents = selectedCategory
+    ? agents.filter(agent => agent.category === selectedCategory)
+    : agents;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-900 py-12">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-white mb-4">Error</h1>
+            <p className="text-gray-400 mb-8">{error}</p>
           </div>
-          <Link 
-            href="/explore/maps" 
-            className="bg-gray-800 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-            </svg>
-            View on Map
-          </Link>
         </div>
-        
-        {error && (
-          <div className="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded mb-4" role="alert">
-            Error loading agents: {error}
-          </div>
-        )}
-        
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
-        ) : agents.length === 0 ? (
-          <div className="bg-gray-900 rounded-lg shadow p-6 mb-8 border border-gray-800">
-            <p className="text-center text-gray-400 py-8">
-              No agents found. Be the first to create an agent!
-            </p>
-            <div className="flex justify-center">
-              <Link 
-                href="/dashboard/create" 
-                className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-white mb-4">
+            Explore Talking Objects
+          </h1>
+          <p className="text-xl text-gray-400">
+            Discover interactive agents that bring Austin&apos;s landmarks to life
+          </p>
+        </div>
+
+        <div className="flex justify-center mb-8">
+          <div className="flex gap-2 p-1 bg-gray-800 rounded-lg">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`px-4 py-2 rounded-md transition-colors ${
+                selectedCategory === null
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              All
+            </button>
+            {categories.map(category => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`px-4 py-2 rounded-md transition-colors ${
+                  selectedCategory === category.id
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
               >
-                Create New Agent
-              </Link>
-            </div>
+                {category.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {filteredAgents.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-400 text-lg">
+              {selectedCategory
+                ? `No agents found in the ${
+                    categories.find(c => c.id === selectedCategory)?.label
+                  } category`
+                : 'No agents found'}
+            </p>
           </div>
         ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {agents.map((agent) => (
-                <div key={agent.id} className="bg-gray-900 rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow border border-gray-800">
-                  <div className="h-40 bg-gray-800 relative">
-                    {agent.image_url ? (
-                      <Image 
-                        src={agent.image_url} 
-                        alt={agent.name}
-                        fill
-                        style={{ objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-blue-900">
-                        <span className="text-blue-200 text-2xl font-bold">{agent.name.charAt(0)}</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg mb-1 text-white">{agent.name}</h3>
-                    <p className="text-gray-400 text-sm mb-3">
-                      {agent.personality.length > 120 
-                        ? `${agent.personality.substring(0, 120)}...` 
-                        : agent.personality}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {agent.data_sources.map((source) => (
-                        <span 
-                          key={source} 
-                          className="bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded"
-                        >
-                          {source}
-                        </span>
-                      ))}
-                    </div>
-                    
-                    <Link 
-                      href={`/agent/${agent.slug}`}
-                      className="block w-full text-center bg-gray-800 hover:bg-gray-700 py-2 rounded-md text-sm transition-colors text-gray-300"
-                    >
-                      Chat with {agent.name}
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="mt-8 text-center">
-              <p className="text-gray-400 mb-4">
-                Don&apos;t see what you&apos;re looking for? Create your own custom agent.
-              </p>
-              <Link 
-                href="/dashboard/create" 
-                className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredAgents.map(agent => (
+              <div
+                key={agent.id}
+                className="bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-transform hover:scale-[1.02]"
               >
-                Create New Agent
-              </Link>
-            </div>
-          </>
+                <div className="relative h-48">
+                  <Image
+                    src={agent.image_url}
+                    alt={agent.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h2 className="text-xl font-bold text-white mb-1">
+                        {agent.name}
+                      </h2>
+                      <p className="text-gray-400">{agent.location}</p>
+                    </div>
+                    <VoicePlayer
+                      text={`Hi, I'm ${agent.name}. ${agent.description}`}
+                      category={agent.category}
+                      agentId={agent.slug}
+                    />
+                  </div>
+                  <p className="text-gray-300 mb-6 line-clamp-3">
+                    {agent.description}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {agent.interests.slice(0, 3).map((interest, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-gray-700 text-gray-300 rounded-full text-sm"
+                      >
+                        {interest}
+                      </span>
+                    ))}
+                  </div>
+                  <Link
+                    href={`/agent/${agent.slug}`}
+                    className="block w-full text-center bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-md transition-colors"
+                  >
+                    Chat with {agent.name}
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

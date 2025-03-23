@@ -27,7 +27,7 @@ export interface PlaceholderAgent {
   user_id: string;
 }
 
-export const PUBLIC_USER_ID = '00000000-0000-0000-0000-000000000000';
+export const PUBLIC_USER_ID = 'public';
 
 export const placeholderAgents: PlaceholderAgent[] = [
   {
@@ -274,35 +274,60 @@ export const placeholderAgents: PlaceholderAgent[] = [
   }
 ];
 
-// Helper function to get all agents
 export const getAllAgents = (): PlaceholderAgent[] => {
-  // Get stored agents (custom created or edited)
-  const storedAgents = getStoredAgents();
-  const storedAgentIds = storedAgents.map(agent => agent.id);
-  
-  // Filter out placeholder agents that have been overridden by stored versions
-  const filteredPlaceholderAgents = placeholderAgents.filter(
-    agent => !storedAgentIds.includes(agent.id)
-  );
-  
-  // Combine default agents with any stored/edited agents
-  return [...filteredPlaceholderAgents, ...storedAgents];
-};
-
-// Helper function to get an agent by slug
-export const getAgentBySlug = (slug: string): PlaceholderAgent | undefined => {
-  return getAllAgents().find(agent => agent.slug === slug);
-};
-
-// Helper function to save agents to localStorage
-export const saveAgents = (agents: PlaceholderAgent[]): void => {
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem('storedAgents', JSON.stringify(agents));
-      console.log('Agents saved successfully:', agents.length);
-    } catch (error) {
-      console.error('Error saving agents to localStorage:', error);
+  try {
+    // Try to get agents from local storage
+    const storedAgents = localStorage.getItem('agents');
+    if (storedAgents) {
+      const parsedAgents = JSON.parse(storedAgents);
+      // Merge with placeholder agents, giving priority to stored agents
+      return [...placeholderAgents, ...parsedAgents].filter((agent, index, self) =>
+        index === self.findIndex((a) => a.slug === agent.slug)
+      );
     }
+  } catch (error) {
+    console.error('Error reading agents from localStorage:', error);
+  }
+  return placeholderAgents;
+};
+
+export const getAgentBySlug = (slug: string): PlaceholderAgent | undefined => {
+  const agents = getAllAgents();
+  const normalizedSlug = slug.toLowerCase();
+  return agents.find(agent => agent.slug.toLowerCase() === normalizedSlug);
+};
+
+export const getAgentsByCategory = (category: keyof typeof voiceConfigs): PlaceholderAgent[] => {
+  const agents = getAllAgents();
+  return agents.filter(agent => agent.category === category && agent.is_active);
+};
+
+export const saveAgent = async (agent: PlaceholderAgent): Promise<void> => {
+  try {
+    const agents = getAllAgents();
+    const existingIndex = agents.findIndex(a => a.slug === agent.slug);
+    
+    if (existingIndex >= 0) {
+      // Update existing agent
+      agents[existingIndex] = {
+        ...agents[existingIndex],
+        ...agent,
+        last_updated: new Date().toISOString()
+      };
+    } else {
+      // Add new agent
+      agents.push({
+        ...agent,
+        created_at: new Date().toISOString(),
+        last_updated: new Date().toISOString()
+      });
+    }
+    
+    // Save to local storage
+    localStorage.setItem('agents', JSON.stringify(agents));
+  } catch (error) {
+    console.error('Error saving agent:', error);
+    throw new Error('Failed to save agent');
   }
 };
 
@@ -338,7 +363,7 @@ export function addAgent(agentData: Omit<PlaceholderAgent, 'slug' | 'id' | 'crea
   const updatedAgents = [...existingAgents, newAgent];
   
   // Save back to localStorage
-  saveAgents(updatedAgents);
+  saveAgent(newAgent);
   
   return newAgent;
 }
@@ -346,7 +371,7 @@ export function addAgent(agentData: Omit<PlaceholderAgent, 'slug' | 'id' | 'crea
 // Helper function to get a placeholder agent by ID
 export function getAgentById(id: string): PlaceholderAgent | undefined {
   // First check localStorage for any updated version
-  const storedAgents = getStoredAgents();
+  const storedAgents = getAllAgents();
   const storedAgent = storedAgents.find(agent => agent.id === id);
   if (storedAgent) {
     return storedAgent;
@@ -384,45 +409,7 @@ export function updateAgent(id: string, agentData: Omit<PlaceholderAgent, 'id' |
   );
   
   // Save back to localStorage
-  saveAgents(updatedAgents);
+  saveAgent(updatedAgent);
   
   return updatedAgent;
-}
-
-// Helper to read stored agents from localStorage
-function getStoredAgents(): PlaceholderAgent[] {
-  if (typeof window === 'undefined') {
-    return [];
-  }
-  
-  try {
-    const storedData = localStorage.getItem('storedAgents');
-    return storedData ? JSON.parse(storedData) : [];
-  } catch (error) {
-    console.error('Error reading stored agents:', error);
-    return [];
-  }
-}
-
-export function saveAgent(agent: PlaceholderAgent): void {
-  try {
-    // Get existing agents
-    const existingAgents = getAllAgents();
-    
-    // Check if agent already exists
-    const existingIndex = existingAgents.findIndex(a => a.slug === agent.slug);
-    
-    if (existingIndex >= 0) {
-      // Update existing agent
-      existingAgents[existingIndex] = agent;
-    } else {
-      // Add new agent
-      existingAgents.push(agent);
-    }
-    
-    // Save back to localStorage
-    saveAgents(existingAgents);
-  } catch (error) {
-    console.error('Error saving agent:', error);
-  }
 } 
