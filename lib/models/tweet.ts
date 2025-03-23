@@ -22,6 +22,13 @@ let tweets: Tweet[] = [];
 
 // Get all tweets
 export function getAllTweets(): Tweet[] {
+  // First check localStorage for any updated version
+  const storedTweets = getStoredTweets();
+  if (storedTweets.length > 0) {
+    return storedTweets;
+  }
+  
+  // If no stored tweets, return the default tweets
   return tweets;
 }
 
@@ -67,19 +74,27 @@ export function addComment(tweetId: string, userName: string, content: string): 
 }
 
 // Like a tweet
-export function likeTweet(tweetId: string): void {
-  const tweet = tweets.find(t => t.id === tweetId);
-  if (tweet) {
-    tweet.likes += 1;
+export function likeTweet(tweetId: string): Tweet | undefined {
+  const tweetIndex = tweets.findIndex(t => t.id === tweetId);
+  if (tweetIndex === -1) {
+    throw new Error('Tweet not found');
   }
+  
+  tweets[tweetIndex].likes += 1;
+  saveTweets();
+  return tweets[tweetIndex];
 }
 
 // Share a tweet
-export function shareTweet(tweetId: string): void {
-  const tweet = tweets.find(t => t.id === tweetId);
-  if (tweet) {
-    tweet.shares += 1;
+export function shareTweet(tweetId: string): Tweet | undefined {
+  const tweetIndex = tweets.findIndex(t => t.id === tweetId);
+  if (tweetIndex === -1) {
+    throw new Error('Tweet not found');
   }
+  
+  tweets[tweetIndex].shares += 1;
+  saveTweets();
+  return tweets[tweetIndex];
 }
 
 // Map of prompts for generating tweets for each agent type
@@ -204,4 +219,31 @@ export function generateInitialTweets(agents: PlaceholderAgent[]): void {
       tweets.push(newTweet);
     }
   });
+}
+
+// Helper function to save tweets to localStorage
+function saveTweets(): void {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('storedTweets', JSON.stringify(tweets));
+      console.log('Tweets saved successfully:', tweets.length);
+    } catch (error) {
+      console.error('Error saving tweets to localStorage:', error);
+    }
+  }
+}
+
+// Helper function to read stored tweets from localStorage
+function getStoredTweets(): Tweet[] {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+  
+  try {
+    const storedData = localStorage.getItem('storedTweets');
+    return storedData ? JSON.parse(storedData) : [];
+  } catch (error) {
+    console.error('Error reading stored tweets:', error);
+    return [];
+  }
 } 
