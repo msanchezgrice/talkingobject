@@ -1,5 +1,4 @@
 import { PlaceholderAgent } from './placeholder-agents';
-import { voiceConfigs } from './voices';
 
 export const additionalAgents: PlaceholderAgent[] = [
   {
