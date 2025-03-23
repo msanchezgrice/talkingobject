@@ -2,11 +2,12 @@ import { Metadata } from 'next';
 import { getAgentBySlug } from '@/lib/placeholder-agents';
 import AgentPage from './AgentPage';
 
-interface PageProps {
+type PageProps = {
   params: {
     slug: string;
   };
-}
+  searchParams: { [key: string]: string | string[] | undefined };
+};
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const agent = getAgentBySlug(params.slug);
