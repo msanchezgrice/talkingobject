@@ -4,9 +4,10 @@ import { voiceConfigs } from '@/lib/voices';
 import CategoryContent from './CategoryContent';
 
 type CategoryPageProps = {
-  params: {
+  params: Promise<{
     category: string;
-  };
+  }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 const categoryInfo = {
@@ -41,7 +42,8 @@ const categoryInfo = {
 };
 
 export async function generateMetadata({ params }: CategoryPageProps) {
-  const category = params.category as keyof typeof voiceConfigs;
+  const resolvedParams = await params;
+  const category = resolvedParams.category as keyof typeof voiceConfigs;
   const info = categoryInfo[category];
 
   if (!info) {
@@ -57,8 +59,9 @@ export async function generateMetadata({ params }: CategoryPageProps) {
   };
 }
 
-export default function CategoryPage({ params }: CategoryPageProps) {
-  const category = params.category as keyof typeof voiceConfigs;
+export default async function CategoryPage({ params }: CategoryPageProps) {
+  const resolvedParams = await params;
+  const category = resolvedParams.category as keyof typeof voiceConfigs;
   const info = categoryInfo[category];
 
   if (!info) {
