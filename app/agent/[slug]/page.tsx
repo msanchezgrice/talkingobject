@@ -3,14 +3,15 @@ import { getAgentBySlug } from '@/lib/placeholder-agents';
 import AgentPage from './AgentPage';
 
 type PageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const agent = getAgentBySlug(params.slug);
+  const resolvedParams = await params;
+  const agent = getAgentBySlug(resolvedParams.slug);
   
   if (!agent) {
     return {
@@ -30,6 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function Page({ params }: PageProps) {
-  return <AgentPage slug={params.slug} />;
+export default async function Page({ params }: PageProps) {
+  const resolvedParams = await params;
+  return <AgentPage slug={resolvedParams.slug} />;
 } 
