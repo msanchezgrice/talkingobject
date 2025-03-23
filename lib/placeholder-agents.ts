@@ -291,11 +291,21 @@ export const getAllAgents = (): PlaceholderAgent[] => {
   return placeholderAgents;
 };
 
-export const getAgentBySlug = (slug: string): PlaceholderAgent | undefined => {
-  const agents = getAllAgents();
-  const normalizedSlug = slug.toLowerCase();
-  return agents.find(agent => agent.slug.toLowerCase() === normalizedSlug);
-};
+export function getAgentBySlug(slug: string): PlaceholderAgent | null {
+  try {
+    // Get agents from localStorage or use placeholder agents
+    const storedAgents = localStorage.getItem('agents');
+    const agents = storedAgents ? JSON.parse(storedAgents) : placeholderAgents;
+
+    // Find the agent with matching slug (case-insensitive)
+    return agents.find((agent: PlaceholderAgent) => 
+      agent.slug.toLowerCase() === slug.toLowerCase()
+    ) || null;
+  } catch (error) {
+    console.error('Error getting agent by slug:', error);
+    return null;
+  }
+}
 
 export const getAgentsByCategory = (category: keyof typeof voiceConfigs): PlaceholderAgent[] => {
   const agents = getAllAgents();

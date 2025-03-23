@@ -5,6 +5,14 @@ import { textToSpeech } from '@/lib/elevenlabs';
 import { Loader2, Volume2, AlertCircle } from 'lucide-react';
 import { voiceConfigs } from '@/lib/voices';
 
+type VoiceConfig = {
+  voice_id: string;
+  settings: {
+    stability: number;
+    similarity_boost: number;
+  };
+};
+
 type VoicePlayerProps = {
   text: string;
   category: keyof typeof voiceConfigs;
@@ -29,7 +37,7 @@ export function VoicePlayer({ text, category, agentId, className }: VoicePlayerP
 
       // Get the voice configuration for this agent
       const categoryConfig = voiceConfigs[category];
-      const voiceConfig = categoryConfig[voiceKey as keyof typeof categoryConfig];
+      const voiceConfig = categoryConfig[voiceKey as keyof typeof categoryConfig] as VoiceConfig;
 
       if (!voiceConfig) {
         throw new Error('Voice configuration not found for this agent');
