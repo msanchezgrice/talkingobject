@@ -21,9 +21,11 @@ export function VoicePlayer({ text, category, agentId }: VoicePlayerProps) {
       setIsLoading(true);
       setError(null);
 
+      // Convert agent ID to the format used in voice configs
       const voiceConfig = getVoiceConfig(category, agentId);
       if (!voiceConfig) {
-        throw new Error('Voice configuration not found');
+        console.error('Voice config not found for:', { category, agentId });
+        throw new Error(`Voice configuration not found for ${category}`);
       }
 
       const url = await textToSpeech(

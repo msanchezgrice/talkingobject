@@ -281,7 +281,7 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
                     <VoicePlayer
                       text={message.content}
                       category={agent.category}
-                      agentId={agent.id}
+                      agentId={agent.slug}
                     />
                   )}
                 </div>

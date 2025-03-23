@@ -79,7 +79,7 @@ export function AgentCard({ agent, onToggleActive }: AgentCardProps) {
         <VoicePlayer
           text={`Hi, I'm ${agent.name}. ${agent.description}`}
           category={agent.category}
-          agentId={agent.id}
+          agentId={agent.slug}
         />
       </CardFooter>
     </Card>

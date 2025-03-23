@@ -25,7 +25,28 @@ export const getVoiceConfig = (category: keyof typeof voiceConfigs, agentId: str
   const categoryVoices = voiceConfigs[category];
   if (!categoryVoices) return null;
   
-  const agentVoice = categoryVoices[agentId as keyof typeof categoryVoices];
+  // Convert agent slug to camelCase for voice config key
+  const agentKey = agentId
+    .split('-')
+    .map((word, index) => 
+      index === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    )
+    .join('');
+  
+  // Try exact match first
+  let agentVoice = categoryVoices[agentKey as keyof typeof categoryVoices];
+  
+  // If no exact match, try matching by removing spaces and special characters
+  if (!agentVoice) {
+    const normalizedKey = agentKey.replace(/[^a-zA-Z0-9]/g, '');
+    const voiceKey = Object.keys(categoryVoices).find(key => 
+      key.toLowerCase() === normalizedKey.toLowerCase()
+    );
+    if (voiceKey) {
+      agentVoice = categoryVoices[voiceKey as keyof typeof categoryVoices];
+    }
+  }
+  
   return agentVoice || null;
 };
 
