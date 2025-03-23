@@ -38,7 +38,7 @@ const CreateAgentForm: React.FC<CreateAgentFormProps> = ({ agent, onSave }) => {
         interests,
         dislikes,
         fun_facts: funFacts,
-        last_updated: new Date().toISOString()
+        updated_at: new Date().toISOString()
       };
 
       // Save to localStorage
