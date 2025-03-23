@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { PlaceholderAgent, addAgent, updateAgent, PUBLIC_USER_ID } from '@/lib/placeholder-agents';
+import { voiceConfigs } from '@/lib/voices';
 import Image from 'next/image';
 
 // Data sources available to agents
@@ -31,6 +32,7 @@ interface AgentFormData {
   twitter_handle: string;
   fun_facts: string[];
   user_id: string;
+  category: keyof typeof voiceConfigs;
 }
 
 type AgentFormProps = {
@@ -56,6 +58,7 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
     twitter_handle: agent?.twitter_handle || '',
     fun_facts: agent?.fun_facts || [],
     user_id: agent?.user_id || PUBLIC_USER_ID,
+    category: agent?.category || 'historicSites'
   });
   const [imagePreview, setImagePreview] = useState<string | null>(agent?.image_url || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,6 +107,7 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
       twitter_handle: formData.twitter_handle,
       fun_facts: formData.fun_facts,
       user_id: formData.user_id,
+      category: formData.category
     };
 
     if (agent) {
@@ -350,6 +354,26 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
           className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
           placeholder="Comma-separated list of fun facts about the agent"
         />
+      </div>
+
+      <div>
+        <label htmlFor="category" className="block text-sm font-medium text-gray-200">
+          Category
+        </label>
+        <select
+          name="category"
+          id="category"
+          value={formData.category}
+          onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as keyof typeof voiceConfigs }))}
+          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+          required
+        >
+          {Object.keys(voiceConfigs).map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="flex items-center">
