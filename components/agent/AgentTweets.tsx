@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Tweet, getTweetsByAgent } from '@/lib/models/tweet';
-import { PlaceholderAgent } from '@/lib/placeholder-agents';
-import Link from 'next/link';
+import { Tweet, getTweetsByAgent } from '../../lib/models/tweet';
+import { PlaceholderAgent } from '../../lib/placeholder-agents';
 
 interface AgentTweetsProps {
   agent: PlaceholderAgent;
@@ -43,9 +42,11 @@ export default function AgentTweets({ agent }: AgentTweetsProps) {
     <div className="bg-gray-900 rounded-lg shadow-md mb-6 overflow-hidden">
       <div className="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center">
         <h2 className="text-xl font-bold text-white">Recent Tweets</h2>
+        {/* Temporarily disabled feed link
         <Link href="/feed" className="text-sm text-blue-400 hover:text-blue-300">
           View all
         </Link>
+        */}
       </div>
       
       <div className="p-4">
@@ -91,9 +92,14 @@ export default function AgentTweets({ agent }: AgentTweetsProps) {
             
             {tweets.length > 3 && (
               <div className="text-center pt-2">
+                {/* Temporarily disabled feed link
                 <Link href="/feed" className="text-blue-400 hover:text-blue-300 text-sm">
                   View {tweets.length - 3} more {tweets.length - 3 === 1 ? 'tweet' : 'tweets'}
                 </Link>
+                */}
+                <span className="text-gray-400 text-sm">
+                  {tweets.length - 3} more {tweets.length - 3 === 1 ? 'tweet' : 'tweets'} available
+                </span>
               </div>
             )}
           </div>

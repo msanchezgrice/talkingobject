@@ -31,12 +31,14 @@ export default function Header() {
           >
             Explore
           </Link>
+          {/* Temporarily disabled feed tab
           <Link 
             href="/feed" 
             className={`hover:text-blue-400 transition-colors ${pathname.startsWith('/feed') ? 'text-blue-400' : ''}`}
           >
             Feed
           </Link>
+          */}
           <ProfileButton />
         </nav>
       </div>
