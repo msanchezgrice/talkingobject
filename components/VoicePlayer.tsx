@@ -1,18 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { textToSpeech, getVoiceConfig } from '@/lib/elevenlabs';
-import { Button } from '@/components/ui/button';
-import { Loader2, Volume2 } from 'lucide-react';
+import { textToSpeech } from '@/lib/elevenlabs';
+import { Loader2, Volume2, AlertCircle } from 'lucide-react';
 import { voiceConfigs } from '@/lib/voices';
 
-interface VoicePlayerProps {
+type VoicePlayerProps = {
   text: string;
   category: keyof typeof voiceConfigs;
   agentId: string;
-}
+  className?: string;
+};
 
-export function VoicePlayer({ text, category, agentId }: VoicePlayerProps) {
+export function VoicePlayer({ text, category, agentId, className }: VoicePlayerProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,46 +22,43 @@ export function VoicePlayer({ text, category, agentId }: VoicePlayerProps) {
       setError(null);
 
       // Convert agent ID to the format used in voice configs
-      const voiceConfig = getVoiceConfig(category, agentId);
+      const voiceKey = agentId
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join('');
+
+      // Get the voice configuration for this agent
+      const categoryConfig = voiceConfigs[category];
+      const voiceConfig = categoryConfig[voiceKey as keyof typeof categoryConfig];
+
       if (!voiceConfig) {
-        console.error('Voice config not found for:', { category, agentId });
-        throw new Error(`Voice configuration not found for ${category}`);
+        throw new Error('Voice configuration not found for this agent');
       }
 
-      const url = await textToSpeech(
-        text,
-        voiceConfig.voice_id,
-        voiceConfig.settings
-      );
-
-      // Play the audio
-      const audio = new Audio(url);
-      audio.play();
+      // Play the audio using the textToSpeech function
+      await textToSpeech(text, voiceConfig.voice_id, voiceConfig.settings);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate speech');
-      console.error('Speech generation error:', err);
+      console.error('Error playing voice:', err);
+      setError('Failed to play voice');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handlePlay}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Volume2 className="h-4 w-4" />
-        )}
-      </Button>
-      {error && (
-        <span className="text-sm text-red-500">{error}</span>
+    <button
+      onClick={handlePlay}
+      disabled={isLoading}
+      className={`inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-700 transition-colors ${className || ''}`}
+      title="Play voice message"
+    >
+      {isLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+      ) : error ? (
+        <AlertCircle className="h-4 w-4 text-red-500" />
+      ) : (
+        <Volume2 className="h-4 w-4 text-gray-400" />
       )}
-    </div>
+    </button>
   );
 } 

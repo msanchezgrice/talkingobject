@@ -19,7 +19,7 @@ const categories: { id: Category; label: string }[] = [
 
 export default function ExplorePage() {
   const [agents, setAgents] = useState<PlaceholderAgent[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>('historicSites');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +40,7 @@ export default function ExplorePage() {
   }, []);
 
   const filteredAgents = selectedCategory
-    ? agents.filter(agent => agent.category.toLowerCase() === selectedCategory.toLowerCase())
+    ? agents.filter(agent => agent.category === selectedCategory)
     : agents;
 
   if (loading) {

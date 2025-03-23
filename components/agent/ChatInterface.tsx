@@ -51,6 +51,12 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
       conversationId,
       message: agentMessage
     });
+
+    // Automatically play the voice message
+    const voicePlayer = document.querySelector(`[data-message-id="${agentMessage.id}"] .voice-player`);
+    if (voicePlayer) {
+      (voicePlayer as HTMLElement).click();
+    }
   }, [conversationId]);
 
   // Create a greeting message when the component mounts
@@ -248,7 +254,7 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
           <h2 className="font-bold text-xl text-white">{agent.name}</h2>
           {agent.latitude && agent.longitude && (
             <p className="text-sm text-gray-400">
-              Located at {agent.latitude.toFixed(6)}, {agent.longitude.toFixed(6)}
+              {agent.location}
             </p>
           )}
         </div>
@@ -267,6 +273,7 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
             {messages.map((message) => (
               <div 
                 key={message.id}
+                data-message-id={message.id}
                 className={`p-3 rounded-lg shadow-sm max-w-[80%] ${
                   message.role === 'user' 
                     ? 'bg-blue-900 text-blue-100 self-end' 
@@ -278,11 +285,14 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
                     {message.role === 'user' ? 'You' : agent.name}
                   </p>
                   {message.role === 'assistant' && (
-                    <VoicePlayer
-                      text={message.content}
-                      category={agent.category}
-                      agentId={agent.slug}
-                    />
+                    <div className="mt-2 flex items-center justify-end">
+                      <VoicePlayer
+                        text={message.content}
+                        category={agent.category}
+                        agentId={agent.slug}
+                        className="voice-player"
+                      />
+                    </div>
                   )}
                 </div>
                 <p className="whitespace-pre-wrap">{message.content}</p>
@@ -291,11 +301,10 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
             
             {isLoading && (
               <div className="bg-gray-700 p-3 rounded-lg shadow-sm max-w-[80%]">
-                <p className="text-sm font-medium mb-1 text-gray-300">{agent.name}</p>
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
                 </div>
               </div>
             )}
