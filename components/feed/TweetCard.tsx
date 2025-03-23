@@ -58,10 +58,7 @@ export default function TweetCard({ tweet, agent }: TweetCardProps) {
     e.preventDefault();
     if (!commentText.trim()) return;
     
-    const result = addComment(tweet.id, {
-      userName: 'You',
-      content: commentText
-    });
+    const result = addComment(tweet.id, 'You', commentText);
     
     if (result) {
       setCommentText('');
