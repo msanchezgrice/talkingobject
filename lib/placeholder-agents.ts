@@ -18,7 +18,7 @@ export interface PlaceholderAgent {
   image_url: string;
   is_active: boolean;
   created_at: string;
-  last_updated: string;
+  updated_at?: string;
   category: keyof typeof voiceConfigs;
   latitude: number;
   longitude: number;
@@ -49,7 +49,7 @@ export const placeholderAgents: PlaceholderAgent[] = [
     twitter_handle: "@srvofficial",
     is_active: true,
     created_at: "2024-01-01",
-    last_updated: "2024-01-01",
+    updated_at: "2024-01-01",
     category: "historicSites",
     latitude: 30.2642,
     longitude: -97.7475,
@@ -76,7 +76,7 @@ export const placeholderAgents: PlaceholderAgent[] = [
     twitter_handle: "@willienelson",
     is_active: true,
     created_at: "2024-01-01",
-    last_updated: "2024-01-01",
+    updated_at: "2024-01-01",
     category: "historicSites",
     latitude: 30.2658,
     longitude: -97.7474,
@@ -103,7 +103,7 @@ export const placeholderAgents: PlaceholderAgent[] = [
     twitter_handle: "@josouthcongress",
     is_active: true,
     created_at: "2024-01-01",
-    last_updated: "2024-01-01",
+    updated_at: "2024-01-01",
     category: "publicArt",
     latitude: 30.2489,
     longitude: -97.7501,
@@ -126,7 +126,7 @@ export const placeholderAgents: PlaceholderAgent[] = [
     twitter_handle: "",
     is_active: true,
     created_at: "2024-01-01",
-    last_updated: "2024-01-01",
+    updated_at: "2024-01-01",
     category: "parksAndNature",
     latitude: 30.2766,
     longitude: -97.7514,
@@ -149,7 +149,7 @@ export const placeholderAgents: PlaceholderAgent[] = [
     twitter_handle: "",
     is_active: true,
     created_at: "2024-01-01",
-    last_updated: "2024-01-01",
+    updated_at: "2024-01-01",
     category: "parksAndNature",
     latitude: 30.2565,
     longitude: -97.7141,
@@ -172,7 +172,7 @@ export const placeholderAgents: PlaceholderAgent[] = [
     twitter_handle: "",
     is_active: true,
     created_at: "2024-01-01",
-    last_updated: "2024-01-01",
+    updated_at: "2024-01-01",
     category: "publicArt",
     latitude: 30.2539,
     longitude: -97.7550,
@@ -195,7 +195,7 @@ export const placeholderAgents: PlaceholderAgent[] = [
     twitter_handle: "",
     is_active: true,
     created_at: "2024-01-01",
-    last_updated: "2024-01-01",
+    updated_at: "2024-01-01",
     category: "parksAndNature",
     latitude: 30.2616,
     longitude: -97.7450,
@@ -218,7 +218,7 @@ export const placeholderAgents: PlaceholderAgent[] = [
     twitter_handle: "",
     is_active: true,
     created_at: "2024-01-01",
-    last_updated: "2024-01-01",
+    updated_at: "2024-01-01",
     category: "historicSites",
     latitude: 30.2747,
     longitude: -97.7404,
@@ -241,7 +241,7 @@ export const placeholderAgents: PlaceholderAgent[] = [
     twitter_handle: "@franklinbbq",
     is_active: true,
     created_at: "2024-01-01",
-    last_updated: "2024-01-01",
+    updated_at: "2024-01-01",
     category: "businesses",
     latitude: 30.2701,
     longitude: -97.7313,
@@ -264,7 +264,7 @@ export const placeholderAgents: PlaceholderAgent[] = [
     twitter_handle: "@bookpeople",
     is_active: true,
     created_at: "2024-01-01",
-    last_updated: "2024-01-01",
+    updated_at: "2024-01-01",
     category: "businesses",
     latitude: 30.2726,
     longitude: -97.7526,
@@ -302,34 +302,33 @@ export const getAgentsByCategory = (category: keyof typeof voiceConfigs): Placeh
   return agents.filter(agent => agent.category === category && agent.is_active);
 };
 
-export const saveAgent = async (agent: PlaceholderAgent): Promise<void> => {
+export function saveAgent(agent: PlaceholderAgent): void {
   try {
     const agents = getAllAgents();
-    const existingIndex = agents.findIndex(a => a.slug === agent.slug);
-    
+    const existingIndex = agents.findIndex(a => a.id === agent.id);
+
     if (existingIndex >= 0) {
       // Update existing agent
       agents[existingIndex] = {
-        ...agents[existingIndex],
         ...agent,
-        last_updated: new Date().toISOString()
+        updated_at: new Date().toISOString()
       };
     } else {
       // Add new agent
       agents.push({
         ...agent,
         created_at: new Date().toISOString(),
-        last_updated: new Date().toISOString()
+        updated_at: new Date().toISOString()
       });
     }
-    
-    // Save to local storage
+
+    // Save to localStorage
     localStorage.setItem('agents', JSON.stringify(agents));
   } catch (error) {
     console.error('Error saving agent:', error);
-    throw new Error('Failed to save agent');
+    throw error;
   }
-};
+}
 
 // Helper function to generate a URL-friendly slug
 function generateSlug(name: string): string {
@@ -340,31 +339,26 @@ function generateSlug(name: string): string {
 }
 
 // Helper function to add a new agent
-export function addAgent(agentData: Omit<PlaceholderAgent, 'slug' | 'id' | 'created_at' | 'last_updated'>): PlaceholderAgent {
+export function addAgent(agentData: Omit<PlaceholderAgent, 'slug' | 'id' | 'created_at' | 'updated_at'>): PlaceholderAgent {
   // Generate a unique slug from the name
   const slug = generateSlug(agentData.name);
   
-  // Create the new agent with all required fields
+  // Create new agent
   const newAgent: PlaceholderAgent = {
     ...agentData,
     id: crypto.randomUUID(),
     slug,
     created_at: new Date().toISOString(),
-    last_updated: new Date().toISOString(),
-    personality: agentData.personality || "A friendly presence in Austin with a unique story to tell.",
-    data_sources: [],
-    user_id: PUBLIC_USER_ID
+    updated_at: new Date().toISOString(),
+    user_id: PUBLIC_USER_ID,
+    is_active: true
   };
 
-  // Get existing agents from localStorage
+  // Save to localStorage
   const existingAgents = getAllAgents();
-  
-  // Add the new agent to the list
-  const updatedAgents = [...existingAgents, newAgent];
-  
-  // Save back to localStorage
-  saveAgent(newAgent);
-  
+  existingAgents.push(newAgent);
+  localStorage.setItem('agents', JSON.stringify(existingAgents));
+
   return newAgent;
 }
 
@@ -382,34 +376,26 @@ export function getAgentById(id: string): PlaceholderAgent | undefined {
 }
 
 // Update an existing agent
-export function updateAgent(id: string, agentData: Omit<PlaceholderAgent, 'id' | 'created_at' | 'last_updated' | 'slug'>): PlaceholderAgent {
+export function updateAgent(id: string, agentData: Omit<PlaceholderAgent, 'id' | 'created_at' | 'updated_at' | 'slug'>): PlaceholderAgent {
   // Get existing agents from localStorage
   const existingAgents = getAllAgents();
-  
-  // Find the agent to update
   const agentIndex = existingAgents.findIndex(a => a.id === id);
-  
+
   if (agentIndex === -1) {
-    throw new Error('Agent not found');
+    throw new Error(`Agent with ID ${id} not found`);
   }
 
-  // Create updated agent with existing data and new data
-  const updatedAgent: PlaceholderAgent = {
+  // Update the agent
+  existingAgents[agentIndex] = {
     ...existingAgents[agentIndex],
     ...agentData,
-    last_updated: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     personality: agentData.personality || existingAgents[agentIndex].personality || "A friendly presence in Austin with a unique story to tell.",
     data_sources: agentData.data_sources || existingAgents[agentIndex].data_sources || [],
-    user_id: existingAgents[agentIndex].user_id
   };
 
-  // Update the agent in the list
-  const updatedAgents = existingAgents.map((agent, index) =>
-    index === agentIndex ? updatedAgent : agent
-  );
-  
-  // Save back to localStorage
-  saveAgent(updatedAgent);
-  
-  return updatedAgent;
+  // Save to localStorage
+  localStorage.setItem('agents', JSON.stringify(existingAgents));
+
+  return existingAgents[agentIndex];
 } 
