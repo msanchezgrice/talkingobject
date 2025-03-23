@@ -286,21 +286,22 @@ export const getAllAgents = (): PlaceholderAgent[] => {
     if (storedAgents) {
       const parsedAgents = JSON.parse(storedAgents);
       // Merge with placeholder agents, giving priority to stored agents
-      const mergedAgents = [...placeholderAgents];
+      const allAgents = [...placeholderAgents];
       parsedAgents.forEach((storedAgent: PlaceholderAgent) => {
-        const index = mergedAgents.findIndex(a => a.slug === storedAgent.slug);
+        const index = allAgents.findIndex(a => a.slug === storedAgent.slug);
         if (index >= 0) {
-          mergedAgents[index] = storedAgent;
+          allAgents[index] = storedAgent;
         } else {
-          mergedAgents.push(storedAgent);
+          allAgents.push(storedAgent);
         }
       });
-      return mergedAgents;
+      return allAgents;
     }
+    return placeholderAgents;
   } catch (error) {
     console.error('Error reading agents from localStorage:', error);
+    return placeholderAgents;
   }
-  return placeholderAgents;
 };
 
 export function getAgentBySlug(slug: string): PlaceholderAgent | null {

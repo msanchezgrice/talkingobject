@@ -95,7 +95,7 @@ export default function ExploreContent() {
             {categories.map(category => (
               <Link
                 key={category.id}
-                href={`/category/${category.id}`}
+                href={`/explore?category=${category.id}`}
                 className={`px-4 py-2 rounded-md transition-colors ${
                   selectedCategory === category.id
                     ? 'bg-blue-600 text-white'
