@@ -59,11 +59,11 @@ export function AgentCard({ agent, onToggleActive }: AgentCardProps) {
         <div className="space-y-2">
           <div>
             <span className="text-sm font-medium">Likes:</span>
-            <span className="text-sm text-gray-600 ml-2">{agent.likes.join(', ')}</span>
+            <span className="text-sm text-gray-600 ml-2">{agent.likes?.join(', ') || 'None'}</span>
           </div>
           <div>
             <span className="text-sm font-medium">Dislikes:</span>
-            <span className="text-sm text-gray-600 ml-2">{agent.dislikes.join(', ')}</span>
+            <span className="text-sm text-gray-600 ml-2">{agent.dislikes?.join(', ') || 'None'}</span>
           </div>
         </div>
       </CardContent>

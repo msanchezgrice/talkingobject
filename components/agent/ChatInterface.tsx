@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import type { PlaceholderAgent } from '@/lib/placeholder-agents';
 import { generateOpenAIResponse } from '@/lib/openai';
 import Image from 'next/image';
+import { VoicePlayer } from '@/components/VoicePlayer';
 
 type ChatInterfaceProps = {
   agent: PlaceholderAgent;
@@ -272,9 +273,18 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
                     : 'bg-gray-700 text-gray-100'
                 }`}
               >
-                <p className="text-sm font-medium mb-1 text-gray-300">
-                  {message.role === 'user' ? 'You' : agent.name}
-                </p>
+                <div className="flex justify-between items-start mb-1">
+                  <p className="text-sm font-medium text-gray-300">
+                    {message.role === 'user' ? 'You' : agent.name}
+                  </p>
+                  {message.role === 'assistant' && (
+                    <VoicePlayer
+                      text={message.content}
+                      category={agent.category}
+                      agentId={agent.id}
+                    />
+                  )}
+                </div>
                 <p className="whitespace-pre-wrap">{message.content}</p>
               </div>
             ))}
