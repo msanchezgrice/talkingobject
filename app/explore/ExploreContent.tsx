@@ -45,7 +45,7 @@ export default function ExploreContent() {
   }, []);
 
   const filteredAgents = selectedCategory
-    ? agents.filter(agent => agent.category === selectedCategory)
+    ? agents.filter(agent => agent.category.toLowerCase() === selectedCategory.toLowerCase())
     : agents;
 
   const handleCategoryChange = (category: Category | null) => {

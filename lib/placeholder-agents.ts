@@ -294,8 +294,7 @@ export const getAllAgents = (): PlaceholderAgent[] => {
 export function getAgentBySlug(slug: string): PlaceholderAgent | null {
   try {
     // Get agents from localStorage or use placeholder agents
-    const storedAgents = localStorage.getItem('agents');
-    const agents = storedAgents ? JSON.parse(storedAgents) : placeholderAgents;
+    const agents = getAllAgents();
 
     // Find the agent with matching slug (case-insensitive)
     return agents.find((agent: PlaceholderAgent) => 
