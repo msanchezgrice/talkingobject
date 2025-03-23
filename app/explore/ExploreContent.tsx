@@ -24,8 +24,8 @@ export default function ExploreContent() {
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
 
-  // Get category from URL or default to 'historicSites'
-  const selectedCategory = (searchParams.get('category') as Category) || 'historicSites';
+  // Get category from URL or default to null for "All"
+  const selectedCategory = searchParams.get('category') as Category | null;
 
   useEffect(() => {
     const loadAgents = () => {

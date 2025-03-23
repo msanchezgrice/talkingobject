@@ -30,7 +30,8 @@ export interface PlaceholderAgent {
 
 export const PUBLIC_USER_ID = 'public';
 
-export const placeholderAgents: PlaceholderAgent[] = [
+// Base placeholder agents array
+const baseAgents: PlaceholderAgent[] = [
   {
     id: "1",
     name: "Stevie Ray Vaughan",
@@ -273,8 +274,10 @@ export const placeholderAgents: PlaceholderAgent[] = [
     data_sources: [],
     user_id: PUBLIC_USER_ID
   },
-  ...additionalAgents
 ];
+
+// Combine base agents with additional agents
+export const placeholderAgents: PlaceholderAgent[] = [...baseAgents, ...additionalAgents];
 
 export const getAllAgents = (): PlaceholderAgent[] => {
   try {
@@ -283,9 +286,16 @@ export const getAllAgents = (): PlaceholderAgent[] => {
     if (storedAgents) {
       const parsedAgents = JSON.parse(storedAgents);
       // Merge with placeholder agents, giving priority to stored agents
-      return [...placeholderAgents, ...parsedAgents].filter((agent, index, self) =>
-        index === self.findIndex((a) => a.slug === agent.slug)
-      );
+      const mergedAgents = [...placeholderAgents];
+      parsedAgents.forEach((storedAgent: PlaceholderAgent) => {
+        const index = mergedAgents.findIndex(a => a.slug === storedAgent.slug);
+        if (index >= 0) {
+          mergedAgents[index] = storedAgent;
+        } else {
+          mergedAgents.push(storedAgent);
+        }
+      });
+      return mergedAgents;
     }
   } catch (error) {
     console.error('Error reading agents from localStorage:', error);
@@ -295,11 +305,11 @@ export const getAllAgents = (): PlaceholderAgent[] => {
 
 export function getAgentBySlug(slug: string): PlaceholderAgent | null {
   try {
-    // Get agents from localStorage or use placeholder agents
-    const agents = getAllAgents();
-
+    // Get all agents (merged from localStorage and placeholders)
+    const allAgents = getAllAgents();
+    
     // Find the agent with matching slug (case-insensitive)
-    return agents.find((agent: PlaceholderAgent) => 
+    return allAgents.find((agent: PlaceholderAgent) => 
       agent.slug.toLowerCase() === slug.toLowerCase()
     ) || null;
   } catch (error) {
