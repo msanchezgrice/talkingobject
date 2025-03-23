@@ -2,6 +2,7 @@
 // These agents will be cached locally in the browser
 
 import { voiceConfigs } from './voices';
+import { additionalAgents } from './additional-agents';
 
 export interface PlaceholderAgent {
   id: string;
@@ -271,7 +272,8 @@ export const placeholderAgents: PlaceholderAgent[] = [
     personality: "A well-read and welcoming presence that speaks passionately about literature, local authors, and the importance of independent bookstores in the community.",
     data_sources: [],
     user_id: PUBLIC_USER_ID
-  }
+  },
+  ...additionalAgents
 ];
 
 export const getAllAgents = (): PlaceholderAgent[] => {

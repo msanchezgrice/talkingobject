@@ -1,37 +1,36 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PlaceholderAgent, getAllAgents } from '@/lib/placeholder-agents';
+import { PlaceholderAgent, getAgentsByCategory } from '@/lib/placeholder-agents';
 import { voiceConfigs } from '@/lib/voices';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { VoicePlayer } from '@/components/VoicePlayer';
-import { useSearchParams } from 'next/navigation';
 
-type Category = keyof typeof voiceConfigs;
+type CategoryInfo = {
+  title: string;
+  description: string;
+  heroImage: string;
+  color: string;
+  textColor: string;
+};
 
-const categories: { id: Category; label: string }[] = [
-  { id: 'historicSites', label: 'Historic Sites' },
-  { id: 'parksAndNature', label: 'Parks & Nature' },
-  { id: 'publicArt', label: 'Public Art' },
-  { id: 'businesses', label: 'Businesses' }
-];
+type CategoryContentProps = {
+  category: keyof typeof voiceConfigs;
+  info: CategoryInfo;
+};
 
-export default function ExploreContent() {
+export default function CategoryContent({ category, info }: CategoryContentProps) {
   const [agents, setAgents] = useState<PlaceholderAgent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const searchParams = useSearchParams();
-
-  // Get category from URL or default to 'historicSites'
-  const selectedCategory = (searchParams.get('category') as Category) || 'historicSites';
 
   useEffect(() => {
     const loadAgents = () => {
       try {
-        const allAgents = getAllAgents();
-        setAgents(allAgents.filter(agent => agent.is_active));
+        const categoryAgents = getAgentsByCategory(category);
+        setAgents(categoryAgents);
       } catch (err) {
         console.error('Error loading agents:', err);
         setError('Failed to load agents');
@@ -41,11 +40,7 @@ export default function ExploreContent() {
     };
 
     loadAgents();
-  }, []);
-
-  const filteredAgents = selectedCategory
-    ? agents.filter(agent => agent.category.toLowerCase() === selectedCategory.toLowerCase())
-    : agents;
+  }, [category]);
 
   if (loading) {
     return (
@@ -70,57 +65,37 @@ export default function ExploreContent() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-4">
-            Explore Talking Objects
+      {/* Hero Section */}
+      <div className={`relative h-96 ${info.color} bg-opacity-90`}>
+        <div className="absolute inset-0">
+          <Image
+            src={info.heroImage}
+            alt={info.title}
+            fill
+            className="object-cover mix-blend-multiply"
+          />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 py-24 sm:py-32">
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
+            {info.title}
           </h1>
-          <p className="text-xl text-gray-400">
-            Discover interactive agents that bring Austin&apos;s landmarks to life
+          <p className="text-xl md:text-2xl text-white opacity-90">
+            {info.description}
           </p>
         </div>
+      </div>
 
-        <div className="flex justify-center mb-8">
-          <div className="flex gap-2 p-1 bg-gray-800 rounded-lg">
-            <Link
-              href="/explore"
-              className={`px-4 py-2 rounded-md transition-colors ${
-                !selectedCategory
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              All
-            </Link>
-            {categories.map(category => (
-              <Link
-                key={category.id}
-                href={`/category/${category.id}`}
-                className={`px-4 py-2 rounded-md transition-colors ${
-                  selectedCategory === category.id
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                {category.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {filteredAgents.length === 0 ? (
+      {/* Agents Grid */}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        {agents.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-400 text-lg">
-              {selectedCategory
-                ? `No agents found in the ${
-                    categories.find(c => c.id === selectedCategory)?.label
-                  } category`
-                : 'No agents found'}
+              No agents found in this category
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAgents.map(agent => (
+            {agents.map(agent => (
               <div
                 key={agent.id}
                 className="bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-transform hover:scale-[1.02]"
@@ -162,7 +137,7 @@ export default function ExploreContent() {
                   </div>
                   <Link
                     href={`/agent/${agent.slug}`}
-                    className="block w-full text-center bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-md transition-colors"
+                    className={`block w-full text-center ${info.color} hover:bg-opacity-90 text-white py-2 rounded-md transition-colors`}
                   >
                     Chat with {agent.name}
                   </Link>
