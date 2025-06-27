@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Simulate basic authentication
 const simulateAuth = (email: string, password: string): Promise<{success: boolean, error?: string}> => {
@@ -64,10 +68,13 @@ export default function AuthForm() {
   };
 
   return (
-    <div className="max-w-md w-full mx-auto bg-gray-900 rounded-lg shadow-md p-8 border border-gray-800">
-      <h2 className="text-2xl font-bold text-center mb-6 text-white">
-        {isLogin ? 'Login to your account' : 'Create a new account'}
-      </h2>
+    <Card className="max-w-md w-full mx-auto bg-gray-900 shadow-md border-gray-800">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold text-center text-white">
+          {isLogin ? 'Login to your account' : 'Create a new account'}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
       
       {error && (
         <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded mb-4" role="alert">
@@ -75,39 +82,39 @@ export default function AuthForm() {
         </div>
       )}
       
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label htmlFor="email" className="block text-sm font-medium mb-1 text-gray-300">Email</label>
-          <input 
-            type="email" 
-            id="email" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-            required
-          />
-        </div>
-        
-        <div className="mb-6">
-          <label htmlFor="password" className="block text-sm font-medium mb-1 text-gray-300">Password</label>
-          <input 
-            type="password" 
-            id="password" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-            required
-          />
-        </div>
-        
-        <button 
-          type="submit" 
-          disabled={isLoading}
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded-md transition-colors disabled:opacity-50"
-        >
-          {isLoading ? 'Processing...' : isLogin ? 'Sign In' : 'Sign Up'}
-        </button>
-      </form>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="email" className="text-gray-300">Email</Label>
+            <Input 
+              type="email" 
+              id="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="bg-gray-800 text-white border-gray-700"
+              required
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="password" className="text-gray-300">Password</Label>
+            <Input 
+              type="password" 
+              id="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="bg-gray-800 text-white border-gray-700"
+              required
+            />
+          </div>
+          
+          <Button 
+            type="submit" 
+            disabled={isLoading}
+            className="w-full bg-blue-600 hover:bg-blue-500"
+          >
+            {isLoading ? 'Processing...' : isLogin ? 'Sign In' : 'Sign Up'}
+          </Button>
+        </form>
       
       <div className="mt-4 text-center">
         <button 
@@ -124,6 +131,7 @@ export default function AuthForm() {
           Back to home
         </Link>
       </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 } 

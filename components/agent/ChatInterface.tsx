@@ -6,6 +6,9 @@ import type { PlaceholderAgent } from '@/lib/placeholder-agents';
 import Image from 'next/image';
 import { VoicePlayer } from '@/components/VoicePlayer';
 import MicButton from '@/components/voice/MicButton';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader } from '@/components/ui/card';
 
 type ChatInterfaceProps = {
   agent: PlaceholderAgent;
@@ -253,8 +256,8 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
   };
 
   return (
-    <div className="bg-gray-900 rounded-lg shadow overflow-hidden flex flex-col border border-gray-800" style={{ maxHeight: '70vh' }}>
-      <div className="p-4 border-b border-gray-800 flex items-center gap-4">
+    <Card className="bg-gray-900 shadow overflow-hidden flex flex-col border-gray-800" style={{ maxHeight: '70vh' }}>
+      <CardHeader className="p-4 border-b border-gray-800 flex flex-row items-center gap-4">
         <div className="w-12 h-12 bg-gray-800 rounded-full overflow-hidden">
           {agent.image_url ? (
             <Image 
@@ -279,7 +282,7 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
             </p>
           )}
         </div>
-      </div>
+      </CardHeader>
       
       <div 
         ref={chatContainerRef}
@@ -333,22 +336,22 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
       <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-800">
         <div className="flex gap-2 items-end">
           <div className="flex-1">
-            <input 
+            <Input 
               type="text" 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your message..." 
-              className="w-full p-2 border rounded-md bg-gray-800 text-white border-gray-700"
               disabled={isLoading || !conversationId}
+              className="bg-gray-800 text-white border-gray-700"
             />
           </div>
-          <button 
+          <Button 
             type="submit"
             disabled={isLoading || !input.trim() || !conversationId}
-            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-blue-600 hover:bg-blue-500"
           >
             Send
-          </button>
+          </Button>
           <div className="ml-2">
             <MicButton
               agent={agent}
@@ -391,6 +394,6 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
           </div>
         </div>
       </form>
-    </div>
+    </Card>
   );
 } 

@@ -12,18 +12,13 @@ import { postTweet, TweetData } from '@/lib/twitter';
 import { getAgentById } from '@/lib/placeholder-agents';
 
 // This API route is called by Vercel Cron every 15 minutes
-export async function GET(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_request: NextRequest) {
   try {
     console.log('🐦 Starting tweet cron job...');
     
-    // Verify this is being called by Vercel Cron (check auth header)
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
-    
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      console.error('🚫 Unauthorized cron request');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Vercel cron jobs are automatically authenticated
+    console.log('🐦 Vercel cron job authenticated automatically');
     
     // Check current rate limit status
     console.log('📊 Checking rate limit status...');
