@@ -44,6 +44,13 @@ export interface SummarySearchResult {
   similarity: number;
 }
 
+export interface MemoryClassification {
+  isMemoryWorthy: boolean;
+  reason?: string;
+  key?: string;
+  value?: string;
+}
+
 // Lazy initialization for server-side safety
 let openai: OpenAI | null = null;
 
@@ -78,7 +85,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 export async function classifyMemoryWorthiness(
   userMessage: string,
   agentName: string
-): Promise<{ isMemoryWorthy: boolean; reason?: string; key?: string; value?: string }> {
+): Promise<MemoryClassification> {
   try {
     const prompt = `Analyze this user message in a conversation with ${agentName} and determine if it contains lasting facts worth remembering for future conversations.
 
@@ -407,7 +414,7 @@ export async function processUserMessage(
 ): Promise<{
   storedMessage: ConversationMessage | null;
   extractedMemory: UserMemory | null;
-  classification: any;
+  classification: MemoryClassification;
 }> {
   try {
     // Classify if the message is memory-worthy
