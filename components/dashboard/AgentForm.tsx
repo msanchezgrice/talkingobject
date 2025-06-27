@@ -289,6 +289,22 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
       </div>
 
       <div>
+        <label htmlFor="location" className="block text-sm font-medium text-gray-200">
+          Location Description
+        </label>
+        <input
+          type="text"
+          name="location"
+          id="location"
+          value={formData.location}
+          onChange={handleChange}
+          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+          placeholder="E.g., Downtown Austin, South Congress"
+          required
+        />
+      </div>
+
+      <div>
         <label htmlFor="twitter_handle" className="block text-sm font-medium text-gray-200">
           Twitter Handle
         </label>
@@ -300,6 +316,24 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
           onChange={handleChange}
           className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
           placeholder="@username"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="interests" className="block text-sm font-medium text-gray-200">
+          Interests (comma-separated)
+        </label>
+        <input
+          type="text"
+          name="interests"
+          id="interests"
+          value={formData.interests.join(', ')}
+          onChange={(e) => {
+            const interestsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
+            setFormData(prev => ({ ...prev, interests: interestsArray }));
+          }}
+          className="mt-1 block w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+          placeholder="Enter interests separated by commas"
         />
       </div>
 
