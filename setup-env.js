@@ -18,8 +18,10 @@ const envContent = `# Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
 NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
 
-# Claude API - Add your API key here
+# AI Provider Configuration
 CLAUDE_API_KEY=your-claude-api-key
+OPENAI_API_KEY=your-openai-api-key
+NEXT_PUBLIC_USE_ANTHROPIC=true
 
 # External API Keys - Add your API keys here
 OPENWEATHERMAP_API_KEY=your-openweathermap-api-key

@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { Agent, Message } from '@/lib/supabase/types';
-
-const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY || '',
-});
+import { chatLLM, AIMessage } from '@/lib/aiProvider';
 
 // Define types for external data
 interface NewsArticle {
@@ -96,14 +92,20 @@ ${externalData ? `Here is some current information you can use in your responses
 
 You should respond in a way that matches your personality. Be helpful, accurate, and engaging.`;
 
-    // Format messages for Claude API
-    const claudeMessages = [];
+    // Format messages for AI provider abstraction
+    const aiMessages: AIMessage[] = [];
+    
+    // Add system message
+    aiMessages.push({
+      role: 'system',
+      content: systemPrompt
+    });
     
     // Add conversation history
     for (const msg of messages) {
       if (msg.role === 'user' || msg.role === 'assistant') {
-        claudeMessages.push({
-          role: msg.role === 'user' ? 'user' as const : 'assistant' as const,
+        aiMessages.push({
+          role: msg.role,
           content: msg.content,
         });
       }
@@ -111,29 +113,15 @@ You should respond in a way that matches your personality. Be helpful, accurate,
     
     // Add the current message if it's not already in the history
     if (!messages.some(msg => msg.role === 'user' && msg.content === message)) {
-      claudeMessages.push({ 
-        role: 'user' as const,
+      aiMessages.push({ 
+        role: 'user',
         content: message
       });
     }
     
-    // Call Claude API
-    const completion = await anthropic.messages.create({
-      model: 'claude-3-haiku-20240307',
-      max_tokens: 2000,
-      system: systemPrompt,
-      messages: claudeMessages,
-    });
-    
-    // Extract the response text
-    let responseText = "I apologize, but I could not generate a proper response.";
-    
-    if (completion.content && completion.content.length > 0) {
-      const firstContent = completion.content[0];
-      if (firstContent.type === 'text') {
-        responseText = firstContent.text;
-      }
-    }
+    // Call AI provider abstraction
+    const response = await chatLLM(aiMessages);
+    const responseText = response.content;
     
     return NextResponse.json({ message: responseText });
     
