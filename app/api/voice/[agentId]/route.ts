@@ -84,10 +84,20 @@ export async function POST(
       const transcription = await getOpenAI().audio.transcriptions.create({
         file: whisperFile,
         model: 'whisper-1',
-        language: 'en',
+        language: 'en', // Explicitly set to English for better accuracy
+        prompt: `This is a conversation with ${agent.name}, an AI agent representing a location in Austin, Texas. The user is speaking about travel, places, recommendations, or asking questions about Austin landmarks and attractions.`, // Context for better recognition
+        response_format: 'verbose_json', // Get more detailed response with confidence
+        temperature: 0.0, // Lower temperature for more consistent results
       });
       
-      userMessage = transcription.text;
+      // Handle both verbose_json and text response formats
+      userMessage = typeof transcription === 'string' ? transcription : transcription.text;
+      
+      // Log confidence if available (verbose_json format)
+      if (typeof transcription === 'object' && 'segments' in transcription && transcription.segments) {
+        console.log('🎤 Transcription confidence available:', transcription.segments.length > 0);
+      }
+      
     } catch (whisperError) {
       console.error('Whisper transcription error:', whisperError);
       return NextResponse.json(
@@ -110,7 +120,7 @@ export async function POST(
 
 Your current location is: ${agent.latitude ? `Latitude: ${agent.latitude}, Longitude: ${agent.longitude}` : 'Unknown'}
 
-You should respond in a way that matches your personality. Be helpful, accurate, and engaging. Keep responses concise for voice interaction (2-3 sentences max).`;
+This is a VOICE conversation, so respond naturally as if speaking aloud. Be conversational, friendly, and engaging. Keep responses concise (2-3 sentences max) but informative. Avoid using special characters, bullet points, or formatting that doesn't translate well to speech. Use natural speech patterns with appropriate pauses indicated by commas and periods.`;
 
     const aiMessages: AIMessage[] = [
       {

@@ -38,25 +38,42 @@ export default function MicButton({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Stop any currently playing audio
+  const stopCurrentAudio = useCallback(() => {
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      currentAudioRef.current = null;
+      setIsPlaying(false);
+    }
+  }, []);
 
   // Play audio response
   const playAudioResponse = useCallback(async (audioBuffer: ArrayBuffer) => {
     try {
+      // Stop any currently playing audio first
+      stopCurrentAudio();
+      
       setIsPlaying(true);
       
       const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
       const audioUrl = URL.createObjectURL(audioBlob);
       
       const audio = new Audio(audioUrl);
+      currentAudioRef.current = audio;
       
       audio.onended = () => {
         setIsPlaying(false);
         URL.revokeObjectURL(audioUrl);
+        currentAudioRef.current = null;
       };
       
       audio.onerror = () => {
         setIsPlaying(false);
         URL.revokeObjectURL(audioUrl);
+        currentAudioRef.current = null;
         onError?.('Failed to play audio response');
       };
       
@@ -65,9 +82,10 @@ export default function MicButton({
     } catch (error) {
       console.error('Audio playback error:', error);
       setIsPlaying(false);
+      currentAudioRef.current = null;
       onError?.('Failed to play audio response');
     }
-  }, [onError]);
+  }, [onError, stopCurrentAudio]);
 
   // Send audio to voice API
   const sendAudioToAPI = useCallback(async (audioBlob: Blob) => {
@@ -114,22 +132,39 @@ export default function MicButton({
     }
   }, [agent, conversationId, onTranscript, onResponse, onError, playAudioResponse]);
 
-  // Initialize audio recording
+  // Initialize audio recording with improved settings for speech recognition
   const initializeRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          sampleRate: 16000,
+          sampleRate: 44100, // Higher sample rate for better quality
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
+          autoGainControl: true, // Helps with volume normalization
         },
       });
       
       streamRef.current = stream;
       
+      // Try to use higher quality audio formats
+      const mimeTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+        'audio/wav'
+      ];
+      
+      let selectedMimeType = 'audio/webm;codecs=opus';
+      for (const mimeType of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(mimeType)) {
+          selectedMimeType = mimeType;
+          break;
+        }
+      }
+      
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus',
+        mimeType: selectedMimeType,
       });
       
       mediaRecorderRef.current = mediaRecorder;
@@ -143,7 +178,7 @@ export default function MicButton({
       
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, {
-          type: 'audio/webm;codecs=opus',
+          type: selectedMimeType,
         });
         
         await sendAudioToAPI(audioBlob);
@@ -164,9 +199,12 @@ export default function MicButton({
     }
   }, [sendAudioToAPI, onError]);
 
-  // Start recording
+  // Start recording - stop any playing audio first
   const startRecording = useCallback(async () => {
     if (disabled || !audioEnabled || isProcessing) return;
+    
+    // Stop any currently playing audio before starting recording
+    stopCurrentAudio();
     
     try {
       const mediaRecorder = await initializeRecording();
@@ -175,7 +213,7 @@ export default function MicButton({
     } catch {
       // Recording initialization failed, audio is disabled
     }
-  }, [disabled, audioEnabled, isProcessing, initializeRecording]);
+  }, [disabled, audioEnabled, isProcessing, initializeRecording, stopCurrentAudio]);
 
   // Stop recording
   const stopRecording = useCallback(() => {
@@ -233,6 +271,8 @@ export default function MicButton({
             ? 'Microphone access denied' 
             : isRecording 
             ? 'Release to send'
+            : isPlaying
+            ? 'Hold to interrupt and record'
             : 'Hold to talk'
         }
       >
