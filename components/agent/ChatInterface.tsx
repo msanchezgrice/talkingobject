@@ -199,7 +199,7 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
   // Use API route for AI responses instead of direct provider access
   const getAIResponse = async (userMessage: string, agent: PlaceholderAgent): Promise<string> => {
     try {
-      // Make API call to our chat endpoint
+      // Make API call to our chat endpoint with full agent data
       const response = await fetch('/api/agent/chat', {
         method: 'POST',
         headers: {
@@ -208,7 +208,7 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
         body: JSON.stringify({
           conversationId: conversationId || `${agent.id}-temp`,
           message: userMessage,
-          agentId: agent.id
+          agent: agent // Send full agent data instead of just ID
         }),
       });
 
