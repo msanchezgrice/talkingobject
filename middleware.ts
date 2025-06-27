@@ -1,8 +1,25 @@
 import { NextResponse } from 'next/server';
 
 export async function middleware() {
-  // Return next response without any auth checks
-  return NextResponse.next();
+  const response = NextResponse.next();
+  
+  // Add Permissions Policy headers to allow microphone access
+  response.headers.set(
+    'Permissions-Policy',
+    'microphone=(self), camera=(self), geolocation=(self)'
+  );
+  
+  // Also add Feature Policy for broader browser support
+  response.headers.set(
+    'Feature-Policy',
+    'microphone \'self\'; camera \'self\'; geolocation \'self\''
+  );
+  
+  // Add Cross-Origin headers for audio processing
+  response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+  
+  return response;
 }
 
 // Define which routes this middleware should run on
