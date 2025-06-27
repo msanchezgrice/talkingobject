@@ -18,6 +18,15 @@ const getOpenAI = () => {
   return openai;
 };
 
+// Helper function to safely encode header values
+const encodeHeaderValue = (value: string): string => {
+  // Remove or replace problematic characters for HTTP headers
+  return value
+    .replace(/[\r\n]/g, ' ') // Replace newlines with spaces
+    .replace(/[^\x20-\x7E]/g, '') // Remove non-ASCII characters
+    .slice(0, 1000); // Limit length to prevent oversized headers
+};
+
 interface PlaceholderAgent {
   id?: string;
   slug: string;
@@ -50,20 +59,47 @@ export async function POST(
     
     const agent = JSON.parse(agentData) as PlaceholderAgent;
     
+    // Validate audio file
+    if (!audioFile.type.includes('audio') && !audioFile.type.includes('webm')) {
+      return NextResponse.json(
+        { error: 'Invalid audio file format. Please try recording again.' },
+        { status: 400 }
+      );
+    }
+    
+    console.log('🎤 Processing voice request for agent:', agent.name);
+    console.log('🎤 Audio file type:', audioFile.type, 'Size:', audioFile.size);
+    
     // Step 1: Convert audio to text using Whisper
     console.log('🎤 Transcribing audio with Whisper...');
-    const transcription = await getOpenAI().audio.transcriptions.create({
-      file: audioFile,
-      model: 'whisper-1',
-      language: 'en', // Can be made configurable
-    });
     
-    const userMessage = transcription.text;
+    let userMessage: string;
+    try {
+      // Create a new File object with the correct type for Whisper
+      const audioBuffer = await audioFile.arrayBuffer();
+      const whisperFile = new File([audioBuffer], 'audio.webm', { 
+        type: 'audio/webm' 
+      });
+      
+      const transcription = await getOpenAI().audio.transcriptions.create({
+        file: whisperFile,
+        model: 'whisper-1',
+        language: 'en',
+      });
+      
+      userMessage = transcription.text;
+    } catch (whisperError) {
+      console.error('Whisper transcription error:', whisperError);
+      return NextResponse.json(
+        { error: 'Failed to transcribe audio. Please try speaking more clearly.' },
+        { status: 500 }
+      );
+    }
     console.log('🎤 Transcribed:', userMessage);
     
-    if (!userMessage.trim()) {
+    if (!userMessage?.trim()) {
       return NextResponse.json(
-        { error: 'No speech detected in audio' },
+        { error: 'No speech detected in audio. Please try again.' },
         { status: 400 }
       );
     }
@@ -74,7 +110,7 @@ export async function POST(
 
 Your current location is: ${agent.latitude ? `Latitude: ${agent.latitude}, Longitude: ${agent.longitude}` : 'Unknown'}
 
-You should respond in a way that matches your personality. Be helpful, accurate, and engaging. Keep responses concise for voice interaction.`;
+You should respond in a way that matches your personality. Be helpful, accurate, and engaging. Keep responses concise for voice interaction (2-3 sentences max).`;
 
     const aiMessages: AIMessage[] = [
       {
@@ -87,7 +123,17 @@ You should respond in a way that matches your personality. Be helpful, accurate,
       }
     ];
     
-    const response = await chatLLM(aiMessages);
+    let response;
+    try {
+      response = await chatLLM(aiMessages);
+    } catch (aiError) {
+      console.error('AI response error:', aiError);
+      return NextResponse.json(
+        { error: 'Failed to generate response. Please try again.' },
+        { status: 500 }
+      );
+    }
+    
     const responseText = response.content;
     console.log('🧠 AI Response:', responseText);
     
@@ -100,17 +146,30 @@ You should respond in a way that matches your personality. Be helpful, accurate,
       speed: 1.0
     };
     
-    const audioBuffer = await generateTTS(responseText, ttsOptions);
-    console.log('🗣️ TTS generated, size:', audioBuffer.byteLength);
+    let audioBuffer;
+    try {
+      audioBuffer = await generateTTS(responseText, ttsOptions);
+      console.log('🗣️ TTS generated, size:', audioBuffer.byteLength);
+    } catch (ttsError) {
+      console.error('TTS generation error:', ttsError);
+      return NextResponse.json(
+        { error: 'Failed to generate voice response. Please try again.' },
+        { status: 500 }
+      );
+    }
     
-    // Step 4: Return the audio as a stream
+    // Step 4: Return the audio as a stream with properly encoded headers
+    const safeTranscript = encodeHeaderValue(userMessage);
+    const safeResponse = encodeHeaderValue(responseText);
+    
     return new NextResponse(audioBuffer, {
       status: 200,
       headers: {
         'Content-Type': 'audio/mpeg',
         'Content-Length': audioBuffer.byteLength.toString(),
-        'X-Transcript': userMessage, // Include transcript in headers
-        'X-Response-Text': responseText, // Include response text in headers
+        'X-Transcript': safeTranscript,
+        'X-Response-Text': safeResponse,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
       },
     });
     
@@ -120,10 +179,8 @@ You should respond in a way that matches your personality. Be helpful, accurate,
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     
     return NextResponse.json(
-      { error: errorMessage },
+      { error: `Voice processing failed: ${errorMessage}` },
       { status: 500 }
     );
   }
-}
-
-// Helper function removed as it's not currently used 
+} 
