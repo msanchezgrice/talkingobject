@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { chatLLM, AIMessage } from '@/lib/aiProvider';
 import { generateTTS, TTSProviderOptions } from '@/lib/tts';
+import { 
+  processUserMessage,
+  buildConversationContext,
+  storeConversationMessage 
+} from '@/lib/memory';
 import OpenAI from 'openai';
 
 // Lazy initialization for server-side safety
@@ -105,6 +110,7 @@ export async function POST(
         { status: 500 }
       );
     }
+    
     console.log('🎤 Transcribed:', userMessage);
     
     if (!userMessage?.trim()) {
@@ -113,25 +119,97 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    // Step 2: Process user message for memory extraction (if user is authenticated)
+    // For now, we'll use a placeholder user ID since PlaceholderAgents don't require auth
+    const userId = 'anonymous-user'; // TODO: Replace with actual user ID when auth is integrated
+    const agentId = agent.id || agent.slug;
+
+    console.log('🧠 Processing message for memory extraction...');
+    let memoryResult = null;
+    let conversationContext = null;
+
+    try {
+      // Process the user message for memory extraction
+      memoryResult = await processUserMessage(
+        userId,
+        agentId,
+        conversationId,
+        userMessage,
+        agent.name
+      );
+
+      console.log('🧠 Memory classification:', memoryResult.classification);
+      if (memoryResult.extractedMemory) {
+        console.log('💾 Extracted memory:', memoryResult.extractedMemory.key, '=', memoryResult.extractedMemory.value);
+      }
+
+      // Build conversation context with memories and summaries
+      conversationContext = await buildConversationContext(
+        userId,
+        agentId,
+        conversationId,
+        userMessage
+      );
+
+      console.log('🧠 Context retrieved:');
+      console.log('  - Memories:', conversationContext.memories.length);
+      console.log('  - Summaries:', conversationContext.summaries.length);
+      console.log('  - Recent messages:', conversationContext.recentMessages.length);
+
+    } catch (memoryError) {
+      console.error('Memory processing error (continuing without memory):', memoryError);
+      // Continue without memory if there's an error
+    }
     
-    // Step 2: Generate AI response using existing chat system
-    console.log('🧠 Generating AI response...');
-    const systemPrompt = `You are "${agent.name}", an AI agent with the following personality: ${agent.personality}
+    // Step 3: Generate AI response using existing chat system with memory context
+    console.log('🧠 Generating AI response with memory context...');
+    
+    let systemPrompt = `You are "${agent.name}", an AI agent with the following personality: ${agent.personality}
 
 Your current location is: ${agent.latitude ? `Latitude: ${agent.latitude}, Longitude: ${agent.longitude}` : 'Unknown'}
 
 This is a VOICE conversation, so respond naturally as if speaking aloud. Be conversational, friendly, and engaging. Keep responses concise (2-3 sentences max) but informative. Avoid using special characters, bullet points, or formatting that doesn't translate well to speech. Use natural speech patterns with appropriate pauses indicated by commas and periods.`;
 
+    // Add memory context to system prompt if available
+    if (conversationContext) {
+      if (conversationContext.memories.length > 0) {
+        systemPrompt += `\n\nWhat I remember about this user:\n${conversationContext.memories
+          .map(m => `- ${m.key}: ${m.value} (relevance: ${Math.round(m.similarity * 100)}%)`)
+          .join('\n')}`;
+      }
+
+      if (conversationContext.summaries.length > 0) {
+        systemPrompt += `\n\nRecent conversation summaries:\n${conversationContext.summaries
+          .map(s => `- ${s.summary_date}: ${s.summary}`)
+          .join('\n')}`;
+      }
+    }
+
     const aiMessages: AIMessage[] = [
       {
         role: 'system',
         content: systemPrompt
-      },
-      {
-        role: 'user',
-        content: userMessage
       }
     ];
+
+    // Add recent conversation history if available
+    if (conversationContext?.recentMessages) {
+      conversationContext.recentMessages.forEach(msg => {
+        if (msg.role !== 'system') {
+          aiMessages.push({
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content
+          });
+        }
+      });
+    }
+
+    // Add current user message
+    aiMessages.push({
+      role: 'user',
+      content: userMessage
+    });
     
     let response;
     try {
@@ -146,8 +224,22 @@ This is a VOICE conversation, so respond naturally as if speaking aloud. Be conv
     
     const responseText = response.content;
     console.log('🧠 AI Response:', responseText);
+
+    // Step 4: Store the AI response in conversation history
+    try {
+      await storeConversationMessage(
+        conversationId,
+        userId,
+        agentId,
+        'assistant',
+        responseText,
+        false // AI responses are typically not memory-worthy themselves
+      );
+    } catch (storageError) {
+      console.error('Error storing AI response (continuing):', storageError);
+    }
     
-    // Step 3: Convert response to speech
+    // Step 5: Convert response to speech
     console.log('🗣️ Generating speech with TTS...');
     const ttsOptions: TTSProviderOptions = {
       agentId: agent.id || agent.slug,
@@ -168,7 +260,7 @@ This is a VOICE conversation, so respond naturally as if speaking aloud. Be conv
       );
     }
     
-    // Step 4: Return the audio as a stream with properly encoded headers
+    // Step 6: Return the audio as a stream with properly encoded headers
     const safeTranscript = encodeHeaderValue(userMessage);
     const safeResponse = encodeHeaderValue(responseText);
     
@@ -179,6 +271,8 @@ This is a VOICE conversation, so respond naturally as if speaking aloud. Be conv
         'Content-Length': audioBuffer.byteLength.toString(),
         'X-Transcript': safeTranscript,
         'X-Response-Text': safeResponse,
+        'X-Memory-Extracted': memoryResult?.extractedMemory ? 'true' : 'false',
+        'X-Memory-Count': conversationContext?.memories.length.toString() || '0',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
       },
     });
