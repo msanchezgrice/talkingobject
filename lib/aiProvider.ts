@@ -24,14 +24,33 @@ export interface AIProvider {
   textToSpeech?(text: string, options?: TTSOptions): Promise<ArrayBuffer>;
 }
 
-// Initialize providers
-const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY || '',
-});
+// Lazy-initialize providers only on server side
+let anthropic: Anthropic | null = null;
+let openai: OpenAI | null = null;
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
-});
+const getAnthropic = () => {
+  if (typeof window !== 'undefined') {
+    throw new Error('Anthropic client should only be used server-side');
+  }
+  if (!anthropic) {
+    anthropic = new Anthropic({
+      apiKey: process.env.CLAUDE_API_KEY || '',
+    });
+  }
+  return anthropic;
+};
+
+const getOpenAI = () => {
+  if (typeof window !== 'undefined') {
+    throw new Error('OpenAI client should only be used server-side');
+  }
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY || '',
+    });
+  }
+  return openai;
+};
 
 // Anthropic Claude provider implementation
 export const claudeProvider: AIProvider = {
@@ -47,7 +66,7 @@ export const claudeProvider: AIProvider = {
         content: msg.content,
       }));
 
-      const completion = await anthropic.messages.create({
+      const completion = await getAnthropic().messages.create({
         model: 'claude-3-haiku-20240307',
         max_tokens: 2000,
         system: systemMessage?.content || '',
@@ -80,7 +99,7 @@ export const openaiProvider: AIProvider = {
   name: 'openai',
   async chatLLM(messages: AIMessage[]): Promise<AIMessage> {
     try {
-      const completion = await openai.chat.completions.create({
+      const completion = await getOpenAI().chat.completions.create({
         model: 'gpt-4o-mini',
         messages: messages.map(msg => ({
           role: msg.role,
@@ -107,7 +126,7 @@ export const openaiProvider: AIProvider = {
 
   async textToSpeech(text: string, options?: TTSOptions): Promise<ArrayBuffer> {
     try {
-      const response = await openai.audio.speech.create({
+      const response = await getOpenAI().audio.speech.create({
         model: options?.model || 'tts-1',
         voice: (options?.voice as 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer') || 'alloy',
         input: text,
