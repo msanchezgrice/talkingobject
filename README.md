@@ -219,3 +219,105 @@ If you encounter issues:
 - The profile table uses `auth_user_id` instead of `user_id` to link to auth.users
 - All agents are associated with profiles through the `auth_user_id` field
 - The public user ID is set to '00000000-0000-0000-0000-000000000000'
+
+## 🧠 Phase 3: Memory & Daily Summaries
+
+The memory system enables persistent conversations and intelligent context awareness across sessions.
+
+### Features
+
+#### 📝 **Persistent Memory**
+- Automatic extraction of lasting facts from conversations
+- Semantic similarity search using OpenAI embeddings
+- User-specific memory storage per agent
+- Memory relevance scoring and context integration
+
+#### 📊 **Daily Summaries**
+- Nightly conversation summarization using GPT-4o-mini
+- Vector embeddings for semantic summary search
+- Historical context retrieval from past conversations
+- Automated daily summary generation via Supabase Edge Functions
+
+#### 🔄 **Real-time Integration**
+- Memory extraction during voice and text conversations
+- Context-aware AI responses with memory and summary data
+- Conversation history tracking and classification
+- Graceful fallback when memory system unavailable
+
+### Configuration
+
+```bash
+# Memory System Controls
+NEXT_PUBLIC_MEMORY_ENABLED=true          # Enable/disable memory system
+NEXT_PUBLIC_MEMORY_USER_TOGGLE=true      # Allow users to control memory
+
+# Required for Memory System
+OPENAI_API_KEY=your_openai_key           # For embeddings and classification
+SUPABASE_SERVICE_ROLE_KEY=your_key       # For Edge Function access
+```
+
+### Database Schema
+
+The memory system uses these tables:
+- `user_memory` - Persistent facts with vector embeddings
+- `daily_summaries` - Daily conversation summaries with embeddings  
+- `conversation_messages` - Message history with memory classification
+
+### API Integration
+
+#### Voice API (`/api/voice/[agentId]`)
+- Extracts memories from voice transcriptions
+- Includes memory context in AI system prompts
+- Returns memory extraction status in response headers
+
+#### Chat API (`/api/agent/chat`)
+- Processes text messages for memory extraction
+- Provides memory and summary counts in response
+- Maintains conversation context across sessions
+
+### Memory Classification
+
+The system automatically identifies memory-worthy content:
+✅ **Stored as Memory:**
+- Personal information (name, preferences, background)
+- Important life events and experiences
+- Goals, plans, and aspirations
+- Relationships and connections
+
+❌ **Not Stored:**
+- Casual conversation and small talk
+- Temporary states (tired, hungry, etc.)
+- Time-specific information
+- Simple questions and acknowledgments
+
+### Daily Summary Generation
+
+Runs nightly via Supabase Edge Function:
+- Processes all agent conversations from previous day
+- Generates intelligent summaries focusing on key topics
+- Creates vector embeddings for semantic search
+- Provides context for future conversations
+
+### Development
+
+```bash
+# Run migrations
+npx supabase migration up
+
+# Deploy Edge Function
+npx supabase functions deploy daily-summarizer
+
+# Test memory system
+npm run dev
+# Check console logs for memory extraction and context retrieval
+```
+
+### Memory Toggle
+
+Users can control memory functionality:
+- Memory extraction can be disabled per user
+- Existing memories remain but new extraction stops
+- Daily summaries continue for conversation context
+- Privacy-focused design with user control
+
+---
