@@ -6,6 +6,12 @@
     "enabled": true,
     "silent": false
   },
+  "crons": [
+    {
+      "path": "/api/cron/tweet",
+      "schedule": "*/15 * * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

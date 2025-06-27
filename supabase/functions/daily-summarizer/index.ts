@@ -93,6 +93,40 @@ Provide a concise but informative summary (2-3 paragraphs max):`;
   return summary;
 }
 
+// Generate tweets from daily summaries (simple implementation)
+function generateTweetsFromSummary(summaryText: string, agentName: string): string[] {
+  // Simple tweet generation from summaries
+  const sentences = summaryText
+    .split(/[.!?]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 10 && s.length < 200);
+  
+  const tweets = sentences
+    .slice(0, 3) // Max 3 tweets per summary
+    .map(sentence => {
+      // Clean up and format the sentence
+      let tweet = sentence.replace(/^(and|but|also|then|now|so)\s+/i, '');
+      
+      // Add agent personality
+      const templates = [
+        `💭 ${agentName}: ${tweet}`,
+        `🗣️ ${agentName} here! ${tweet}`,
+        `From ${agentName}: ${tweet}`,
+      ];
+      
+      const tweetText = templates[Math.floor(Math.random() * templates.length)];
+      
+      // Ensure it's not too long
+      if (tweetText.length > 240) {
+        return tweetText.substring(0, 237) + '...';
+      }
+      
+      return tweetText;
+    });
+  
+  return tweets.filter(tweet => tweet.length > 20); // Filter out very short tweets
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -218,6 +252,34 @@ serve(async (req) => {
           throw new Error(`Error storing summary for agent ${agent.id}: ${summaryError.message}`);
         }
 
+        // Generate tweets from the summary
+        const tweets = generateTweetsFromSummary(summary, agent.name);
+        
+        // Queue tweets for posting (with random delays over next 6 hours)
+        if (tweets.length > 0) {
+          const tweetInserts = tweets.map(tweetText => {
+            const randomHours = Math.random() * 6; // 0-6 hours
+            const randomMinutes = Math.random() * 60; // 0-60 minutes
+            const postTime = new Date(Date.now() + (randomHours * 60 * 60 * 1000) + (randomMinutes * 60 * 1000));
+            
+            return {
+              agent_id: agent.id,
+              payload: tweetText,
+              not_before: postTime.toISOString(),
+            };
+          });
+
+          const { error: tweetError } = await supabase
+            .from('tweet_queue')
+            .insert(tweetInserts);
+
+          if (tweetError) {
+            console.error(`Error queueing tweets for ${agent.name}:`, tweetError);
+          } else {
+            console.log(`Queued ${tweets.length} tweets for ${agent.name}`);
+          }
+        }
+
         console.log(`Successfully created summary for ${agent.name}`);
         results.push({
           agent_id: agent.id,
@@ -225,6 +287,7 @@ serve(async (req) => {
           status: 'success',
           summary_length: summary.length,
           message_count: messages.length,
+          tweets_queued: tweets.length,
         });
 
       } catch (agentError) {

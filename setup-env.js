@@ -62,6 +62,11 @@ PUBLIC_USER_ID=00000000-0000-0000-0000-000000000000
 # Memory System Configuration (Phase 3)
 ${memory.enabled.key}=${memory.enabled.defaultValue}
 ${memory.userToggle.key}=${memory.userToggle.defaultValue}
+
+# Twitter/X Syndication Configuration (Phase 5)
+TWITTER_BEARER_TOKEN=your-twitter-bearer-token
+CRON_SECRET=your-cron-secret-for-vercel
+ADMIN_SECRET=your-admin-secret-for-manual-triggers
 `;
 
 // Create or update .env.local file
