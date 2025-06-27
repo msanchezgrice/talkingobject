@@ -5,6 +5,7 @@ import type { PlaceholderAgent } from '@/lib/placeholder-agents';
 // Removed direct AI provider import - using API route instead
 import Image from 'next/image';
 import { VoicePlayer } from '@/components/VoicePlayer';
+import MicButton from '@/components/voice/MicButton';
 
 type ChatInterfaceProps = {
   agent: PlaceholderAgent;
@@ -304,15 +305,17 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
       </div>
       
       <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-800">
-        <div className="flex gap-2">
-          <input 
-            type="text" 
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..." 
-            className="flex-1 p-2 border rounded-md bg-gray-800 text-white border-gray-700"
-            disabled={isLoading || !conversationId}
-          />
+        <div className="flex gap-2 items-end">
+          <div className="flex-1">
+            <input 
+              type="text" 
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type your message..." 
+              className="w-full p-2 border rounded-md bg-gray-800 text-white border-gray-700"
+              disabled={isLoading || !conversationId}
+            />
+          </div>
           <button 
             type="submit"
             disabled={isLoading || !input.trim() || !conversationId}
@@ -320,6 +323,46 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
           >
             Send
           </button>
+          <div className="ml-2">
+            <MicButton
+              agent={agent}
+              conversationId={conversationId || `${agent.id}-temp`}
+              onTranscript={(transcript) => {
+                // Add user message to chat
+                const userMessage: Message = {
+                  id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`,
+                  created_at: new Date().toISOString(),
+                  content: transcript,
+                  role: 'user'
+                };
+                setMessages(prev => [...prev, userMessage]);
+                saveMessageToLocalStorage({ conversationId: conversationId || `${agent.id}-temp`, message: userMessage });
+              }}
+              onResponse={(response) => {
+                // Add assistant message to chat
+                const assistantMessage: Message = {
+                  id: `assistant-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`,
+                  created_at: new Date().toISOString(),
+                  content: response,
+                  role: 'assistant'
+                };
+                setMessages(prev => [...prev, assistantMessage]);
+                saveMessageToLocalStorage({ conversationId: conversationId || `${agent.id}-temp`, message: assistantMessage });
+              }}
+              onError={(error) => {
+                console.error('Voice error:', error);
+                // Show error in chat or as a toast
+                const errorMessage: Message = {
+                  id: `error-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`,
+                  created_at: new Date().toISOString(),
+                  content: `Voice error: ${error}`,
+                  role: 'assistant'
+                };
+                setMessages(prev => [...prev, errorMessage]);
+              }}
+              disabled={isLoading || !conversationId}
+            />
+          </div>
         </div>
       </form>
     </div>

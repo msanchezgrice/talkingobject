@@ -23,6 +23,10 @@ CLAUDE_API_KEY=your-claude-api-key
 OPENAI_API_KEY=your-openai-api-key
 NEXT_PUBLIC_USE_ANTHROPIC=true
 
+# TTS Provider Configuration
+NEXT_PUBLIC_ELEVENLABS_API_KEY=your-elevenlabs-api-key
+NEXT_PUBLIC_USE_ELEVENLABS=false
+
 # External API Keys - Add your API keys here
 OPENWEATHERMAP_API_KEY=your-openweathermap-api-key
 NEWS_API_KEY=your-newsapi-key
