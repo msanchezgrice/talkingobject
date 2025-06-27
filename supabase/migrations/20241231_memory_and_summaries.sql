@@ -59,6 +59,8 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- Drop existing trigger if it exists, then create it
+DROP TRIGGER IF EXISTS update_user_memory_updated_at ON user_memory;
 CREATE TRIGGER update_user_memory_updated_at 
     BEFORE UPDATE ON user_memory 
     FOR EACH ROW 
@@ -68,6 +70,12 @@ CREATE TRIGGER update_user_memory_updated_at
 ALTER TABLE user_memory ENABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_summaries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE conversation_messages ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist, then create them
+DROP POLICY IF EXISTS "Users can view their own memory" ON user_memory;
+DROP POLICY IF EXISTS "Users can insert their own memory" ON user_memory;
+DROP POLICY IF EXISTS "Users can update their own memory" ON user_memory;
+DROP POLICY IF EXISTS "Users can delete their own memory" ON user_memory;
 
 -- User Memory Policies
 CREATE POLICY "Users can view their own memory" ON user_memory
@@ -82,6 +90,11 @@ CREATE POLICY "Users can update their own memory" ON user_memory
 CREATE POLICY "Users can delete their own memory" ON user_memory
     FOR DELETE USING (auth.uid() = user_id);
 
+-- Drop existing daily summaries policies if they exist
+DROP POLICY IF EXISTS "Authenticated users can view daily summaries" ON daily_summaries;
+DROP POLICY IF EXISTS "System can insert daily summaries" ON daily_summaries;
+DROP POLICY IF EXISTS "System can update daily summaries" ON daily_summaries;
+
 -- Daily Summaries Policies (readable by all authenticated users)
 CREATE POLICY "Authenticated users can view daily summaries" ON daily_summaries
     FOR SELECT USING (auth.role() = 'authenticated');
@@ -91,6 +104,11 @@ CREATE POLICY "System can insert daily summaries" ON daily_summaries
 
 CREATE POLICY "System can update daily summaries" ON daily_summaries
     FOR UPDATE USING (true);
+
+-- Drop existing conversation messages policies if they exist
+DROP POLICY IF EXISTS "Users can view their own messages" ON conversation_messages;
+DROP POLICY IF EXISTS "Users can insert their own messages" ON conversation_messages;
+DROP POLICY IF EXISTS "Users can update their own messages" ON conversation_messages;
 
 -- Conversation Messages Policies
 CREATE POLICY "Users can view their own messages" ON conversation_messages
