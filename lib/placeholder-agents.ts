@@ -425,4 +425,121 @@ export function saveAgent(agent: PlaceholderAgent): void {
   } catch (error) {
     console.error('Error saving agent:', error);
   }
+}
+
+// Phase 4: Location and grouping utilities
+export interface AgentGroup {
+  city: string;
+  area?: string;
+  agents: PlaceholderAgent[];
+}
+
+export interface CategoryGroup {
+  category: string;
+  displayName: string;
+  agents: PlaceholderAgent[];
+}
+
+// Extract city from location string
+export function extractCityFromLocation(location: string): string {
+  // For now, default to Austin since all current agents are there
+  // In the future, this could parse various city formats
+  if (location.toLowerCase().includes('austin')) return 'Austin';
+  
+  // Add more cities as needed
+  return 'Austin'; // Default fallback
+}
+
+// Extract area/district from location string
+export function extractAreaFromLocation(location: string): string {
+  const location_lower = location.toLowerCase();
+  
+  if (location_lower.includes('south congress')) return 'South Congress';
+  if (location_lower.includes('downtown')) return 'Downtown';
+  if (location_lower.includes('east 11th') || location_lower.includes('east austin')) return 'East Austin';
+  if (location_lower.includes('north lamar')) return 'North Austin';
+  if (location_lower.includes('lady bird lake') || location_lower.includes('auditorium shores')) return 'Lady Bird Lake Area';
+  if (location_lower.includes('congress avenue')) return 'Congress Avenue';
+  
+  return 'Central Austin'; // Default fallback
+}
+
+// Group agents by city and area
+export function groupAgentsByLocation(agents: PlaceholderAgent[]): AgentGroup[] {
+  const groups: Map<string, AgentGroup> = new Map();
+  
+  agents.forEach(agent => {
+    const city = extractCityFromLocation(agent.location);
+    const area = extractAreaFromLocation(agent.location);
+    const groupKey = `${city}-${area}`;
+    
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, {
+        city,
+        area,
+        agents: []
+      });
+    }
+    
+    groups.get(groupKey)!.agents.push(agent);
+  });
+  
+  return Array.from(groups.values()).sort((a, b) => {
+    // Sort by city first, then by area
+    if (a.city !== b.city) return a.city.localeCompare(b.city);
+    return (a.area || '').localeCompare(b.area || '');
+  });
+}
+
+// Group agents by category
+export function groupAgentsByCategory(agents: PlaceholderAgent[]): CategoryGroup[] {
+  const categoryDisplayNames = {
+    historicSites: 'Historic Sites & Icons',
+    parksAndNature: 'Parks & Nature',
+    publicArt: 'Public Art & Murals',
+    businesses: 'Local Businesses'
+  };
+  
+  const groups: Map<string, CategoryGroup> = new Map();
+  
+  agents.forEach(agent => {
+    const category = agent.category;
+    
+    if (!groups.has(category)) {
+      groups.set(category, {
+        category,
+        displayName: categoryDisplayNames[category] || category,
+        agents: []
+      });
+    }
+    
+    groups.get(category)!.agents.push(agent);
+  });
+  
+  return Array.from(groups.values()).sort((a, b) => 
+    a.displayName.localeCompare(b.displayName)
+  );
+}
+
+// Generate location-aware system prompt for chat
+export function generateLocationContext(agent: PlaceholderAgent): string {
+  const city = extractCityFromLocation(agent.location);
+  const area = extractAreaFromLocation(agent.location);
+  
+  return `You are ${agent.name}, located at ${agent.location} in ${area}, ${city}. 
+    
+Your coordinates are ${agent.coordinates}. You embody the spirit and character of this specific place.
+    
+${agent.personality}
+
+When chatting, reference your specific location, the local area, nearby landmarks, and what makes this place special in ${city}. 
+Share stories and insights that only someone who "lives" at this exact location would know.
+
+Your interests include: ${agent.interests.join(', ')}.
+You particularly enjoy: ${agent.likes.join(', ')}.
+You're not fond of: ${agent.dislikes.join(', ')}.
+
+${agent.fun_facts.length > 0 ? `Some interesting facts about your location: ${agent.fun_facts.join('; ')}.` : ''}
+
+Be engaging, authentic, and true to the character of ${agent.name} at this specific location.`;
 } 

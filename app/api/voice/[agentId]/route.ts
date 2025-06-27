@@ -6,6 +6,7 @@ import {
   buildConversationContext,
   storeConversationMessage 
 } from '@/lib/memory';
+import { generateLocationContext, PlaceholderAgent } from '@/lib/placeholder-agents';
 import OpenAI from 'openai';
 
 // Lazy initialization for server-side safety
@@ -32,15 +33,7 @@ const encodeHeaderValue = (value: string): string => {
     .slice(0, 1000); // Limit length to prevent oversized headers
 };
 
-interface PlaceholderAgent {
-  id?: string;
-  slug: string;
-  name: string;
-  personality: string;
-  latitude?: number;
-  longitude?: number;
-  category?: string;
-}
+
 
 export async function POST(
   request: NextRequest,
@@ -54,6 +47,7 @@ export async function POST(
     const audioFile = formData.get('audio') as File;
     const agentData = formData.get('agent') as string;
     const conversationId = formData.get('conversationId') as string;
+    const locationContextData = formData.get('locationContext') as string;
     
     if (!audioFile || !agentData || !conversationId) {
       return NextResponse.json(
@@ -63,6 +57,22 @@ export async function POST(
     }
     
     const agent = JSON.parse(agentData) as PlaceholderAgent;
+    
+    // Parse location context if provided
+    let locationContext = null;
+    if (locationContextData && locationContextData !== 'null') {
+      try {
+        locationContext = JSON.parse(locationContextData);
+      } catch (e) {
+        console.warn('Error parsing location context:', e);
+      }
+    }
+    
+    // Check if this is a location-aware conversation
+    const isLocationAware = locationContext?.locationAware === true;
+    if (isLocationAware) {
+      console.log('🗺️ Location-aware voice chat detected for:', agent.name);
+    }
     
     // Validate audio file
     if (!audioFile.type.includes('audio') && !audioFile.type.includes('webm')) {
@@ -163,13 +173,26 @@ export async function POST(
     }
     
     // Step 3: Generate AI response using existing chat system with memory context
-    console.log('🧠 Generating AI response with memory context...');
+    console.log('🧠 Generating AI response with enhanced context...');
     
-    let systemPrompt = `You are "${agent.name}", an AI agent with the following personality: ${agent.personality}
+    let systemPrompt = '';
+    
+    if (isLocationAware) {
+      // Use location-aware context for enhanced geo-specific conversations
+      systemPrompt = generateLocationContext(agent);
+      
+      // Add voice-specific instructions to the location-aware prompt
+      systemPrompt += `\n\nIMPORTANT: This is a VOICE conversation, so respond naturally as if speaking aloud. Be conversational, friendly, and engaging. Keep responses concise (2-3 sentences max) but informative. Avoid using special characters, bullet points, or formatting that doesn't translate well to speech. Use natural speech patterns with appropriate pauses indicated by commas and periods.`;
+      
+      console.log('🗺️ Using location-aware system prompt for voice');
+    } else {
+      // Use standard system prompt
+      systemPrompt = `You are "${agent.name}", an AI agent with the following personality: ${agent.personality}
 
 Your current location is: ${agent.latitude ? `Latitude: ${agent.latitude}, Longitude: ${agent.longitude}` : 'Unknown'}
 
 This is a VOICE conversation, so respond naturally as if speaking aloud. Be conversational, friendly, and engaging. Keep responses concise (2-3 sentences max) but informative. Avoid using special characters, bullet points, or formatting that doesn't translate well to speech. Use natural speech patterns with appropriate pauses indicated by commas and periods.`;
+    }
 
     // Add memory context to system prompt if available
     if (conversationContext) {

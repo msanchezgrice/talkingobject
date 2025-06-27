@@ -5,13 +5,14 @@ import {
   buildConversationContext,
   storeConversationMessage 
 } from '@/lib/memory';
+import { generateLocationContext } from '@/lib/placeholder-agents';
 
 // Using AIMessage interface from lib/aiProvider.ts
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { conversationId, message, agent } = body;
+    const { conversationId, message, agent, locationContext } = body;
     
     if (!conversationId || !message || !agent) {
       return NextResponse.json(
@@ -27,6 +28,12 @@ export async function POST(request: Request) {
 
     console.log('💬 Processing text chat for agent:', agent.name);
     console.log('💬 User message:', message);
+    
+    // Check if this is a location-aware conversation
+    const isLocationAware = locationContext?.locationAware === true;
+    if (isLocationAware) {
+      console.log('🗺️ Location-aware chat detected for:', agent.location);
+    }
 
     // Step 1: Process user message for memory extraction
     console.log('🧠 Processing message for memory extraction...');
@@ -70,14 +77,23 @@ export async function POST(request: Request) {
     // This will be re-enabled in later phases with proper agent data
     const externalData = '';
     
-    // Step 2: Prepare the system prompt with memory context
-    let systemPrompt = `You are "${agent.name}", an AI agent with the following personality: ${agent.personality}
+    // Step 2: Prepare the system prompt with location and memory context
+    let systemPrompt = '';
+    
+    if (isLocationAware) {
+      // Use location-aware context for enhanced geo-specific conversations
+      systemPrompt = generateLocationContext(agent);
+      console.log('🗺️ Using location-aware system prompt');
+    } else {
+      // Use standard system prompt
+      systemPrompt = `You are "${agent.name}", an AI agent with the following personality: ${agent.personality}
 
 Your current location is: ${agent.latitude ? `Latitude: ${agent.latitude}, Longitude: ${agent.longitude}` : 'Unknown'}
 
 ${externalData ? `Here is some current information you can use in your responses:\n${externalData}` : ''}
 
 You should respond in a way that matches your personality. Be helpful, accurate, and engaging.`;
+    }
 
     // Add memory context to system prompt if available
     if (conversationContext) {
@@ -122,7 +138,7 @@ You should respond in a way that matches your personality. Be helpful, accurate,
     });
     
     // Step 3: Call AI provider abstraction
-    console.log('🧠 Generating AI response with memory context...');
+    console.log('🧠 Generating AI response with enhanced context...');
     const response = await chatLLM(aiMessages);
     const responseText = response.content;
 
@@ -148,7 +164,8 @@ You should respond in a way that matches your personality. Be helpful, accurate,
         extracted: memoryResult?.extractedMemory ? true : false,
         memoryCount: conversationContext?.memories.length || 0,
         summariesCount: conversationContext?.summaries.length || 0
-      }
+      },
+      locationAware: isLocationAware
     });
     
   } catch (error: unknown) {

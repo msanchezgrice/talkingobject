@@ -200,7 +200,26 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
   // Use API route for AI responses instead of direct provider access
   const getAIResponse = async (userMessage: string, agent: PlaceholderAgent): Promise<string> => {
     try {
-      // Make API call to our chat endpoint with full agent data
+      // Check for location context from sessionStorage
+      let locationContext = null;
+      try {
+        const storedContext = sessionStorage.getItem(`agent-${agent.id}-context`);
+        if (storedContext) {
+          const context = JSON.parse(storedContext);
+          // Check if context is recent (within 1 hour)
+          if (context.timestamp && Date.now() - context.timestamp < 3600000) {
+            locationContext = context;
+            console.log('🗺️ Using stored location context for enhanced chat');
+          } else {
+            // Remove expired context
+            sessionStorage.removeItem(`agent-${agent.id}-context`);
+          }
+        }
+      } catch (e) {
+        console.warn('Error reading location context:', e);
+      }
+
+      // Make API call to our chat endpoint with full agent data and location context
       const response = await fetch('/api/agent/chat', {
         method: 'POST',
         headers: {
@@ -209,7 +228,8 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
         body: JSON.stringify({
           conversationId: conversationId || `${agent.id}-temp`,
           message: userMessage,
-          agent: agent // Send full agent data instead of just ID
+          agent: agent, // Send full agent data instead of just ID
+          locationContext: locationContext // Include location context if available
         }),
       });
 
@@ -218,6 +238,12 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
       }
 
       const data = await response.json();
+      
+      // Log location-aware status
+      if (data.locationAware) {
+        console.log('🗺️ Response generated with location-aware context');
+      }
+      
       return data.message || 'Sorry, I could not generate a response.';
     } catch (error) {
       console.error('Error getting AI response:', error);

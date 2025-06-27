@@ -92,10 +92,30 @@ export default function MicButton({
     setIsProcessing(true);
     
     try {
+      // Check for location context from sessionStorage
+      let locationContext = null;
+      try {
+        const storedContext = sessionStorage.getItem(`agent-${agent.id || agent.slug}-context`);
+        if (storedContext) {
+          const context = JSON.parse(storedContext);
+          // Check if context is recent (within 1 hour)
+          if (context.timestamp && Date.now() - context.timestamp < 3600000) {
+            locationContext = context;
+            console.log('🗺️ Using stored location context for enhanced voice chat');
+          } else {
+            // Remove expired context
+            sessionStorage.removeItem(`agent-${agent.id || agent.slug}-context`);
+          }
+        }
+      } catch (e) {
+        console.warn('Error reading location context:', e);
+      }
+
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
       formData.append('agent', JSON.stringify(agent));
       formData.append('conversationId', conversationId);
+      formData.append('locationContext', JSON.stringify(locationContext));
       
       console.log('🎤 Sending audio to voice API...');
       const response = await fetch(`/api/voice/${agent.id || agent.slug}`, {
