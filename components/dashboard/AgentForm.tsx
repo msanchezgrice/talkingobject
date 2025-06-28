@@ -3,7 +3,6 @@
 import { useState, useRef } from 'react';
 import { createAgent, updateAgent, DatabaseAgent, CreateAgentData, UpdateAgentData } from '@/lib/database/agents';
 import { supabase } from '@/lib/supabase/client';
-import { voiceConfigs } from '@/lib/voices';
 import Image from 'next/image';
 
 // Data sources available to agents
