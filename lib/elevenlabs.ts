@@ -47,6 +47,22 @@ export const getVoiceConfig = (category: keyof typeof voiceConfigs, agentId: str
     }
   }
   
+  // If still no match, use the first voice in the category as fallback
+  if (!agentVoice) {
+    // Prefer 'default' voice if available
+    if ('default' in categoryVoices) {
+      agentVoice = categoryVoices['default' as keyof typeof categoryVoices];
+      console.log(`Using default voice for ${agentId} in ${category}`);
+    } else {
+      // Otherwise use the first voice in the category
+      const firstVoiceKey = Object.keys(categoryVoices)[0];
+      if (firstVoiceKey) {
+        agentVoice = categoryVoices[firstVoiceKey as keyof typeof categoryVoices];
+        console.log(`Using fallback voice for ${agentId} in ${category}: ${firstVoiceKey}`);
+      }
+    }
+  }
+  
   return agentVoice || null;
 };
 

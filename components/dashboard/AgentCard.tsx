@@ -115,6 +115,8 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
       .substring(0, 2);
   };
 
+
+
   return (
     <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 hover:shadow-xl hover:bg-white/80 transition-all duration-300 flex flex-col h-full">
       <div className="p-6">
