@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase/client';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // Database Agent Type (matches your schema)
 export interface DatabaseAgent {
@@ -363,75 +362,4 @@ export async function getAgentsByCategory(category: string): Promise<DatabaseAge
     console.error('Error in getAgentsByCategory:', error);
     return [];
   }
-}
-
-/**
- * Server-side functions (for API routes)
- */
-export const serverAgentQueries = {
-  async getAllPublicAgents(): Promise<DatabaseAgent[]> {
-    try {
-      const supabase = createServerSupabaseClient();
-      const { data, error } = await supabase
-        .from('agents')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching public agents (server):', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Error in serverAgentQueries.getAllPublicAgents:', error);
-      return [];
-    }
-  },
-
-  async getUserAgents(userId: string): Promise<DatabaseAgent[]> {
-    try {
-      const supabase = createServerSupabaseClient();
-      const { data, error } = await supabase
-        .from('agents')
-        .select('*')
-        .eq('auth_user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching user agents (server):', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Error in serverAgentQueries.getUserAgents:', error);
-      return [];
-    }
-  },
-
-  async getAgentBySlug(slug: string): Promise<DatabaseAgent | null> {
-    try {
-      const supabase = createServerSupabaseClient();
-      const { data, error } = await supabase
-        .from('agents')
-        .select('*')
-        .eq('slug', slug)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return null;
-        }
-        console.error('Error fetching agent by slug (server):', error);
-        return null;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error in serverAgentQueries.getAgentBySlug:', error);
-      return null;
-    }
-  }
-}; 
+} 

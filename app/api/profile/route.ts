@@ -4,7 +4,7 @@ import {
   serverProfileQueries,
   generateUsernameFromEmail,
   isUsernameAvailable
-} from '@/lib/database/profiles';
+} from '@/lib/database/server-profiles';
 
 // Create a new user profile
 export async function POST(request: NextRequest) {

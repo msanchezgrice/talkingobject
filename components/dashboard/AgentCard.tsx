@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PlaceholderAgent } from '@/lib/placeholder-agents';
+import { DatabaseAgent } from '@/lib/database/agents';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -10,12 +11,13 @@ import { Switch } from '@/components/ui/switch';
 import { VoicePlayer } from '@/components/VoicePlayer';
 
 interface AgentCardProps {
-  agent: PlaceholderAgent;
-  onToggleActive?: (agentId: string, isActive: boolean) => void;
+  agent: DatabaseAgent;
+  onUpdate?: () => void;
 }
 
-export function AgentCard({ agent, onToggleActive }: AgentCardProps) {
+export function AgentCard({ agent, onUpdate }: AgentCardProps) {
   const router = useRouter();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleEditClick = () => {
     router.push(`/agent/${agent.slug}/edit`);
@@ -25,49 +27,116 @@ export function AgentCard({ agent, onToggleActive }: AgentCardProps) {
     router.push(`/agent/${agent.slug}`);
   };
 
-  const handleToggleActive = () => {
-    onToggleActive?.(agent.id, !agent.is_active);
+  const handleToggleActive = async () => {
+    setIsUpdating(true);
+    try {
+      // Call API to update agent active status
+      const response = await fetch(`/api/agents/${agent.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          is_active: !agent.is_active
+        }),
+      });
+
+      if (response.ok) {
+        onUpdate?.();
+      } else {
+        console.error('Failed to update agent status');
+      }
+    } catch (error) {
+      console.error('Error updating agent status:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const formatLocation = () => {
+    if (agent.latitude && agent.longitude) {
+      return `${agent.latitude.toFixed(4)}, ${agent.longitude.toFixed(4)}`;
+    }
+    return 'No location set';
+  };
+
+  const getAgentInitials = () => {
+    return agent.name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
   };
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col h-full">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Avatar>
-              <AvatarImage src={agent.image_url} alt={agent.name} />
-              <AvatarFallback>{agent.name[0]}</AvatarFallback>
+              <AvatarImage src={agent.image_url || undefined} alt={agent.name} />
+              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                {getAgentInitials()}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle>{agent.name}</CardTitle>
-              <CardDescription>{agent.location}</CardDescription>
+              <CardTitle className="text-lg">{agent.name}</CardTitle>
+              <CardDescription className="text-sm">
+                {formatLocation()}
+              </CardDescription>
             </div>
           </div>
-          <Switch
-            checked={agent.is_active}
-            onCheckedChange={handleToggleActive}
-          />
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={agent.is_active}
+              onCheckedChange={handleToggleActive}
+              disabled={isUpdating}
+            />
+            <span className="text-xs text-muted-foreground">
+              {agent.is_active ? 'Active' : 'Inactive'}
+            </span>
+          </div>
         </div>
       </CardHeader>
+      
       <CardContent className="flex-grow">
-        <p className="text-sm text-gray-600 mb-4">{agent.description}</p>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {agent.interests.map((interest, index) => (
-            <Badge key={index} variant="secondary">{interest}</Badge>
-          ))}
-        </div>
-        <div className="space-y-2">
-          <div>
-            <span className="text-sm font-medium">Likes:</span>
-            <span className="text-sm text-gray-600 ml-2">{agent.likes?.join(', ') || 'None'}</span>
+        <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+          {agent.description || 'No description provided'}
+        </p>
+        
+        {agent.interests && agent.interests.length > 0 && (
+          <div className="mb-4">
+            <div className="flex flex-wrap gap-2">
+              {agent.interests.slice(0, 3).map((interest, index) => (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {interest}
+                </Badge>
+              ))}
+              {agent.interests.length > 3 && (
+                <Badge variant="outline" className="text-xs">
+                  +{agent.interests.length - 3} more
+                </Badge>
+              )}
+            </div>
           </div>
-          <div>
-            <span className="text-sm font-medium">Dislikes:</span>
-            <span className="text-sm text-gray-600 ml-2">{agent.dislikes?.join(', ') || 'None'}</span>
+        )}
+
+        <div className="space-y-2 text-xs text-muted-foreground">
+          <div className="flex justify-between">
+            <span>Created:</span>
+            <span>{new Date(agent.created_at).toLocaleDateString()}</span>
           </div>
+          {agent.fee_amount > 0 && (
+            <div className="flex justify-between">
+              <span>Fee:</span>
+              <span>{agent.fee_amount} {agent.fee_token}</span>
+            </div>
+          )}
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between items-center">
+      
+      <CardFooter className="flex justify-between items-center pt-4">
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleViewClick}>
             View
@@ -77,8 +146,8 @@ export function AgentCard({ agent, onToggleActive }: AgentCardProps) {
           </Button>
         </div>
         <VoicePlayer
-          text={`Hi, I'm ${agent.name}. ${agent.description}`}
-          category={agent.category}
+          text={`Hi, I'm ${agent.name}. ${agent.description || agent.personality}`}
+          category="businesses"
           agentId={agent.slug}
         />
       </CardFooter>

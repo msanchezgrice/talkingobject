@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase/client';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // Database Profile Type (matches your schema)
 export interface DatabaseProfile {
@@ -218,86 +217,4 @@ export async function deleteProfile(userId: string): Promise<boolean> {
     console.error('Error in deleteProfile:', error);
     return false;
   }
-}
-
-/**
- * Server-side functions (for API routes)
- */
-export const serverProfileQueries = {
-  async getProfileByUserId(userId: string): Promise<DatabaseProfile | null> {
-    try {
-      const supabase = createServerSupabaseClient();
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('auth_user_id', userId)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return null;
-        }
-        console.error('Error fetching profile (server):', error);
-        return null;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error in serverProfileQueries.getProfileByUserId:', error);
-      return null;
-    }
-  },
-
-  async createProfile(profileData: CreateProfileData): Promise<DatabaseProfile | null> {
-    try {
-      const supabase = createServerSupabaseClient();
-      const { data, error } = await supabase
-        .from('profiles')
-        .insert({
-          auth_user_id: profileData.auth_user_id,
-          username: profileData.username,
-          full_name: profileData.full_name ?? null,
-          avatar_url: profileData.avatar_url ?? null,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating profile (server):', error);
-        return null;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error in serverProfileQueries.createProfile:', error);
-      return null;
-    }
-  },
-
-  async updateProfile(userId: string, profileData: UpdateProfileData): Promise<DatabaseProfile | null> {
-    try {
-      const supabase = createServerSupabaseClient();
-      const updateData = {
-        ...profileData,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('auth_user_id', userId)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error updating profile (server):', error);
-        return null;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error in serverProfileQueries.updateProfile:', error);
-      return null;
-    }
-  }
-}; 
+} 
