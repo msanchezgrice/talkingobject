@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import { DatabaseAgent, deleteAgent } from '@/lib/database/agents';
+import { ClerkDatabaseAgent, deleteClerkAgent } from '@/lib/database/clerk-agents';
 import { supabase } from '@/lib/supabase/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,12 +14,13 @@ import { Switch } from '@/components/ui/switch';
 import { VoicePlayer } from '@/components/VoicePlayer';
 
 interface AgentCardProps {
-  agent: DatabaseAgent;
+  agent: DatabaseAgent | ClerkDatabaseAgent;
   onUpdate?: () => void;
 }
 
 export function AgentCard({ agent, onUpdate }: AgentCardProps) {
   const router = useRouter();
+  const { user } = useUser();
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -63,14 +66,25 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
     try {
-      // Get current user
-      const { data: { session }, error: authError } = await supabase.auth.getSession();
-      
-      if (authError || !session?.user) {
-        throw new Error('Authentication required');
-      }
+      let success = false;
 
-      const success = await deleteAgent(agent.id, session.user.id);
+      // Check if this is a Clerk agent or Supabase agent
+      if ('clerk_user_id' in agent && agent.clerk_user_id) {
+        // This is a Clerk agent - use Clerk delete function
+        if (!user?.id) {
+          throw new Error('User authentication required');
+        }
+        success = await deleteClerkAgent(agent.id, user.id);
+      } else {
+        // This is a Supabase agent - use traditional auth
+        const { data: { session }, error: authError } = await supabase.auth.getSession();
+        
+        if (authError || !session?.user) {
+          throw new Error('Authentication required');
+        }
+
+        success = await deleteAgent(agent.id, session.user.id);
+      }
       
       if (success) {
         onUpdate?.();
