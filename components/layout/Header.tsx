@@ -13,21 +13,21 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-black text-white py-4">
+    <header className="bg-card border-b border-border py-4 shadow-sm">
       <div className="container mx-auto px-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold">
-          <Link href="/" className="hover:text-blue-400 transition-colors">Talking Objects</Link>
+          <Link href="/" className="hover:text-primary transition-colors text-foreground">Talking Objects</Link>
         </h1>
         <nav className="flex gap-6 items-center">
           <Link 
             href="/dashboard" 
-            className={`hover:text-blue-400 transition-colors ${pathname.startsWith('/dashboard') ? 'text-blue-400' : ''}`}
+            className={`hover:text-primary transition-colors ${pathname.startsWith('/dashboard') ? 'text-primary' : 'text-muted-foreground'}`}
           >
             Dashboard
           </Link>
           <Link 
             href="/explore" 
-            className={`hover:text-blue-400 transition-colors ${pathname.startsWith('/explore') ? 'text-blue-400' : ''}`}
+            className={`hover:text-primary transition-colors ${pathname.startsWith('/explore') ? 'text-primary' : 'text-muted-foreground'}`}
           >
             Explore
           </Link>

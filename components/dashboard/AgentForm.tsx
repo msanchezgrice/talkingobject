@@ -124,9 +124,9 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-200">
+    <form onSubmit={handleSubmit} className="space-y-8 bg-card p-6 rounded-lg border shadow-lg">
+      <div className="space-y-2">
+        <label htmlFor="name" className="block text-sm font-medium text-foreground">
           Name
         </label>
         <input
@@ -135,7 +135,7 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
           id="name"
           value={formData.name}
           onChange={handleChange}
-          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+          className="w-full p-3 border-2 rounded-md bg-background text-foreground focus:border-primary transition-colors"
           placeholder="E.g., Coffee Shop Guide"
           required
         />

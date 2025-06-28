@@ -68,13 +68,13 @@ export default function AuthForm() {
   };
 
   return (
-    <Card className="max-w-md w-full mx-auto bg-gray-900 shadow-md border-gray-800">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center text-white">
+    <Card className="max-w-md w-full mx-auto bg-card shadow-xl border-2">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-bold text-center text-foreground">
           {isLogin ? 'Login to your account' : 'Create a new account'}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
       
       {error && (
         <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded mb-4" role="alert">
@@ -82,27 +82,29 @@ export default function AuthForm() {
         </div>
       )}
       
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="email" className="text-gray-300">Email</Label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-foreground font-medium">Email</Label>
             <Input 
               type="email" 
               id="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-gray-800 text-white border-gray-700"
+              className="bg-background border-2 h-11 focus:border-primary"
+              placeholder="Enter your email"
               required
             />
           </div>
           
-          <div>
-            <Label htmlFor="password" className="text-gray-300">Password</Label>
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-foreground font-medium">Password</Label>
             <Input 
               type="password" 
               id="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="bg-gray-800 text-white border-gray-700"
+              className="bg-background border-2 h-11 focus:border-primary"
+              placeholder="Enter your password"
               required
             />
           </div>
@@ -110,27 +112,27 @@ export default function AuthForm() {
           <Button 
             type="submit" 
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-500"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium h-11"
           >
             {isLoading ? 'Processing...' : isLogin ? 'Sign In' : 'Sign Up'}
           </Button>
         </form>
       
-      <div className="mt-4 text-center">
-        <button 
-          onClick={() => setIsLogin(!isLogin)} 
-          className="text-blue-400 hover:text-blue-300 text-sm"
-        >
-          {isLogin ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
-        </button>
-      </div>
-      
-      <div className="mt-6 pt-6 border-t border-gray-800 text-center text-sm text-gray-400">
-        <p className="mb-2">Demo mode: Authentication is simulated using browser storage.</p>
-        <Link href="/" className="text-blue-400 hover:text-blue-300 hover:underline">
-          Back to home
-        </Link>
-      </div>
+        <div className="text-center">
+          <button 
+            onClick={() => setIsLogin(!isLogin)} 
+            className="text-primary hover:text-primary/80 text-sm font-medium"
+          >
+            {isLogin ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
+          </button>
+        </div>
+        
+        <div className="pt-6 border-t text-center text-sm text-muted-foreground">
+          <p className="mb-2">Demo mode: Authentication is simulated using browser storage.</p>
+          <Link href="/" className="text-primary hover:text-primary/80 hover:underline font-medium">
+            Back to home
+          </Link>
+        </div>
       </CardContent>
     </Card>
   );

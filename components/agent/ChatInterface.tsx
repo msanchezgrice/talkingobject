@@ -256,8 +256,8 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
   };
 
   return (
-    <Card className="bg-gray-900 shadow overflow-hidden flex flex-col border-gray-800" style={{ maxHeight: '70vh' }}>
-      <CardHeader className="p-4 border-b border-gray-800 flex flex-row items-center gap-4">
+    <Card className="bg-card shadow-lg overflow-hidden flex flex-col border" style={{ maxHeight: '70vh' }}>
+      <CardHeader className="p-4 border-b flex flex-row items-center gap-4">
         <div className="w-12 h-12 bg-gray-800 rounded-full overflow-hidden">
           {agent.image_url ? (
             <Image 
@@ -275,9 +275,9 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
           )}
         </div>
         <div>
-          <h2 className="font-bold text-xl text-white">{agent.name}</h2>
+          <h2 className="font-bold text-xl text-foreground">{agent.name}</h2>
           {agent.latitude && agent.longitude && (
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Located at {agent.latitude.toFixed(6)}, {agent.longitude.toFixed(6)}
             </p>
           )}
@@ -286,10 +286,10 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
       
       <div 
         ref={chatContainerRef}
-        className="p-4 overflow-y-auto bg-gray-800 flex-1" style={{ height: '350px' }}
+        className="p-4 overflow-y-auto bg-muted/30 flex-1" style={{ height: '350px' }}
       >
         {messages.length === 0 ? (
-          <div className="flex justify-center items-center h-full text-gray-400">
+          <div className="flex justify-center items-center h-full text-muted-foreground">
             {isLoading ? 'Starting conversation...' : 'No messages yet'}
           </div>
         ) : (
@@ -299,12 +299,12 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
                 key={message.id}
                 className={`p-3 rounded-lg shadow-sm max-w-[80%] ${
                   message.role === 'user' 
-                    ? 'bg-blue-900 text-blue-100 self-end' 
-                    : 'bg-gray-700 text-gray-100'
+                    ? 'bg-primary text-primary-foreground self-end' 
+                    : 'bg-card text-card-foreground border'
                 }`}
               >
                 <div className="flex justify-between items-start mb-1">
-                  <p className="text-sm font-medium text-gray-300">
+                  <p className="text-sm font-medium text-muted-foreground">
                     {message.role === 'user' ? 'You' : agent.name}
                   </p>
                   {message.role === 'assistant' && (
@@ -320,12 +320,12 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
             ))}
             
             {isLoading && (
-              <div className="bg-gray-700 p-3 rounded-lg shadow-sm max-w-[80%]">
-                <p className="text-sm font-medium mb-1 text-gray-300">{agent.name}</p>
+              <div className="bg-card border p-3 rounded-lg shadow-sm max-w-[80%]">
+                <p className="text-sm font-medium mb-1 text-muted-foreground">{agent.name}</p>
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
                 </div>
               </div>
             )}
@@ -333,7 +333,7 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
         )}
       </div>
       
-      <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-800">
+      <form onSubmit={handleSendMessage} className="p-4 border-t bg-card/50">
         <div className="flex gap-2 items-end">
           <div className="flex-1">
             <Input 
@@ -342,13 +342,13 @@ export default function ChatInterface({ agent }: ChatInterfaceProps) {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your message..." 
               disabled={isLoading || !conversationId}
-              className="bg-gray-800 text-white border-gray-700"
+              className="bg-background border-2 focus:border-primary"
             />
           </div>
           <Button 
             type="submit"
             disabled={isLoading || !input.trim() || !conversationId}
-            className="bg-blue-600 hover:bg-blue-500"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
           >
             Send
           </Button>
