@@ -2,10 +2,8 @@
 
 import Link from 'next/link';
 import { ClerkProfileButton } from '@/components/auth/ClerkProfileButton';
-import { usePathname } from 'next/navigation';
 
 export default function Header() {
-  const pathname = usePathname();
 
   return (
     <header className="bg-gradient-to-r from-black/50 to-gray-900/50 backdrop-blur-md border-b border-gray-800/50 relative z-10">

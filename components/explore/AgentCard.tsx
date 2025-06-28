@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { DatabaseAgent } from '@/lib/database/agents';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -118,9 +119,11 @@ export function AgentCard({ agent, showLocation = false }: AgentCardProps) {
           <div className="flex items-start space-x-4 mb-4">
             <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${categoryStyle.gradient} flex items-center justify-center border-2 ${categoryStyle.border} group-hover:scale-110 transition-transform duration-300`}>
               {agent.image_url ? (
-                <img 
+                <Image 
                   src={agent.image_url} 
                   alt={agent.name}
+                  width={56}
+                  height={56}
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (

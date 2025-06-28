@@ -144,7 +144,7 @@ export default function ExplorePage() {
             </div>
             <p className="text-gray-600 dark:text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
               Discover interactive AI agents across the city. Each represents a unique place, 
-              person, or piece of Austin's culture waiting to share their story.
+              person, or piece of Austin&apos;s culture waiting to share their story.
             </p>
           </div>
           
@@ -231,7 +231,7 @@ export default function ExplorePage() {
             </svg>
           </div>
           <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">No agents found</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-8 text-lg max-w-md mx-auto">Be the first to create an agent and share Austin's story!</p>
+          <p className="text-gray-600 dark:text-gray-300 mb-8 text-lg max-w-md mx-auto">Be the first to create an agent and share Austin&apos;s story!</p>
           <Link 
             href="/dashboard/create" 
             className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 inline-flex items-center shadow-lg hover:shadow-xl transform hover:scale-105"
