@@ -70,7 +70,7 @@ export function generateSlugFromName(name: string): string {
  */
 export async function isSlugAvailable(slug: string, excludeId?: string): Promise<boolean> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     let query = supabase
       .from('agents')
@@ -101,7 +101,7 @@ export async function isSlugAvailable(slug: string, excludeId?: string): Promise
 export const serverAgentQueries = {
   async getAllPublicAgents(): Promise<DatabaseAgent[]> {
     try {
-      const supabase = createServerSupabaseClient();
+      const supabase = await createServerSupabaseClient();
       const { data, error } = await supabase
         .from('agents')
         .select('*')
@@ -122,7 +122,7 @@ export const serverAgentQueries = {
 
   async getUserAgents(userId: string): Promise<DatabaseAgent[]> {
     try {
-      const supabase = createServerSupabaseClient();
+      const supabase = await createServerSupabaseClient();
       const { data, error } = await supabase
         .from('agents')
         .select('*')
@@ -143,7 +143,7 @@ export const serverAgentQueries = {
 
   async getAgentBySlug(slug: string): Promise<DatabaseAgent | null> {
     try {
-      const supabase = createServerSupabaseClient();
+      const supabase = await createServerSupabaseClient();
       const { data, error } = await supabase
         .from('agents')
         .select('*')
@@ -167,7 +167,7 @@ export const serverAgentQueries = {
 
   async createAgent(agentData: CreateAgentData): Promise<DatabaseAgent | null> {
     try {
-      const supabase = createServerSupabaseClient();
+      const supabase = await createServerSupabaseClient();
       
       // Generate slug if not provided
       const slug = agentData.slug || generateSlugFromName(agentData.name);
@@ -206,7 +206,7 @@ export const serverAgentQueries = {
 
   async updateAgent(id: string, agentData: UpdateAgentData): Promise<DatabaseAgent | null> {
     try {
-      const supabase = createServerSupabaseClient();
+      const supabase = await createServerSupabaseClient();
       
       const updateData = {
         ...agentData,
@@ -234,7 +234,7 @@ export const serverAgentQueries = {
 
   async deleteAgent(id: string, userId: string): Promise<boolean> {
     try {
-      const supabase = createServerSupabaseClient();
+      const supabase = await createServerSupabaseClient();
       
       const { error } = await supabase
         .from('agents')
@@ -257,7 +257,16 @@ export const serverAgentQueries = {
   // Clerk-compatible server functions
   async getClerkAgentBySlug(slug: string): Promise<DatabaseAgent | null> {
     try {
+      console.log('🔍 Attempting to fetch agent by slug:', slug);
+      console.log('🌐 Environment check:', {
+        hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        url: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30) + '...'
+      });
+      
       const supabase = await createServerSupabaseClient();
+      console.log('✅ Supabase client created successfully');
+      
       const { data, error } = await supabase
         .from('agents')
         .select('*')
@@ -266,15 +275,22 @@ export const serverAgentQueries = {
 
       if (error) {
         if (error.code === 'PGRST116') {
+          console.log('🔍 No agent found with slug:', slug);
           return null;
         }
-        console.error('Error fetching agent by slug (server):', error);
+        console.error('❌ Error fetching agent by slug (server):', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         return null;
       }
 
+      console.log('✅ Agent found:', data ? data.name : 'null');
       return data;
     } catch (error) {
-      console.error('Error in serverAgentQueries.getClerkAgentBySlug:', error);
+      console.error('💥 Error in serverAgentQueries.getClerkAgentBySlug:', error);
       return null;
     }
   }
