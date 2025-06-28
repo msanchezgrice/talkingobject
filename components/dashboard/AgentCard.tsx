@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { DatabaseAgent } from '@/lib/database/agents';
+import { DatabaseAgent, deleteAgent } from '@/lib/database/agents';
+import { supabase } from '@/lib/supabase/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,8 @@ interface AgentCardProps {
 export function AgentCard({ agent, onUpdate }: AgentCardProps) {
   const router = useRouter();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleEditClick = () => {
     router.push(`/agent/${agent.slug}/edit`);
@@ -51,6 +54,39 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      // Get current user
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      
+      if (authError || !session?.user) {
+        throw new Error('Authentication required');
+      }
+
+      const success = await deleteAgent(agent.id, session.user.id);
+      
+      if (success) {
+        onUpdate?.();
+      } else {
+        console.error('Failed to delete agent');
+      }
+    } catch (error) {
+      console.error('Error deleting agent:', error);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
   };
 
   const formatLocation = () => {
@@ -136,20 +172,57 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
         </div>
       </CardContent>
       
-      <CardFooter className="flex justify-between items-center pt-4">
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleViewClick}>
-            View
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleEditClick}>
-            Edit
-          </Button>
+      <CardFooter className="flex flex-col gap-4 pt-4">
+        <div className="flex justify-between items-center w-full">
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleViewClick}>
+              View
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleEditClick}>
+              Edit
+            </Button>
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              onClick={handleDeleteClick}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </div>
+          <VoicePlayer
+            text={`Hi, I'm ${agent.name}. ${agent.description || agent.personality}`}
+            category="businesses"
+            agentId={agent.slug}
+          />
         </div>
-        <VoicePlayer
-          text={`Hi, I'm ${agent.name}. ${agent.description || agent.personality}`}
-          category="businesses"
-          agentId={agent.slug}
-        />
+
+        {/* Delete confirmation dialog */}
+        {showDeleteConfirm && (
+          <div className="w-full p-3 bg-destructive/10 border border-destructive rounded-md">
+            <p className="text-sm text-destructive mb-3">
+              Are you sure you want to delete this agent? This action cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDeleteCancel}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
       </CardFooter>
     </Card>
   );

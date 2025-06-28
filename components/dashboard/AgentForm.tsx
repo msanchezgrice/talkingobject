@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { PlaceholderAgent, addAgent, updateAgent, PUBLIC_USER_ID } from '@/lib/placeholder-agents';
+import { createAgent, updateAgent, DatabaseAgent, CreateAgentData, UpdateAgentData } from '@/lib/database/agents';
+import { supabase } from '@/lib/supabase/client';
 import { voiceConfigs } from '@/lib/voices';
 import Image from 'next/image';
 
@@ -20,23 +21,17 @@ interface AgentFormData {
   personality: string;
   description: string;
   interests: string[];
-  likes: string[];
-  dislikes: string[];
   is_active: boolean;
   latitude: number;
   longitude: number;
   image_url: string;
   data_sources: string[];
-  location: string;
-  coordinates: string;
-  twitter_handle: string;
-  fun_facts: string[];
-  user_id: string;
-  category: keyof typeof voiceConfigs;
+  fee_amount: number;
+  fee_token: string;
 }
 
 type AgentFormProps = {
-  agent?: PlaceholderAgent;
+  agent?: DatabaseAgent;
   onSubmit: () => void;
 };
 
@@ -46,21 +41,18 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
     personality: agent?.personality || '',
     description: agent?.description || '',
     interests: agent?.interests || [],
-    likes: agent?.likes || [],
-    dislikes: agent?.dislikes || [],
     is_active: agent?.is_active ?? true,
-    latitude: agent?.latitude || 0,
-    longitude: agent?.longitude || 0,
+    latitude: agent?.latitude || 30.2672, // Default to Austin
+    longitude: agent?.longitude || -97.7431, // Default to Austin
     image_url: agent?.image_url || '',
     data_sources: agent?.data_sources || [],
-    location: agent?.location || '',
-    coordinates: agent?.coordinates || '',
-    twitter_handle: agent?.twitter_handle || '',
-    fun_facts: agent?.fun_facts || [],
-    user_id: agent?.user_id || PUBLIC_USER_ID,
-    category: agent?.category || 'historicSites'
+    fee_amount: agent?.fee_amount || 0,
+    fee_token: agent?.fee_token || 'ETH'
   });
+  
   const [imagePreview, setImagePreview] = useState<string | null>(agent?.image_url || null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -87,44 +79,100 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
     setImagePreview(url);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const generateSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single
+      .trim() // Remove leading/trailing spaces
+      .substring(0, 50); // Limit length
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const agentData = {
-      name: formData.name,
-      personality: formData.personality,
-      description: formData.description,
-      interests: formData.interests,
-      likes: formData.likes,
-      dislikes: formData.dislikes,
-      is_active: formData.is_active,
-      latitude: formData.latitude,
-      longitude: formData.longitude,
-      image_url: formData.image_url || '/images/placeholder.jpg',
-      data_sources: formData.data_sources,
-      location: formData.location,
-      coordinates: formData.coordinates,
-      twitter_handle: formData.twitter_handle,
-      fun_facts: formData.fun_facts,
-      user_id: formData.user_id,
-      category: formData.category
-    };
+    setIsSubmitting(true);
+    setError(null);
 
-    if (agent) {
-      // For updating an existing agent
-      updateAgent(agent.id, agentData);
-      console.log('Updated agent:', agentData);
-    } else {
-      // For creating a new agent, add it to localStorage
-      const newAgent = addAgent(agentData);
-      console.log('Created new agent:', newAgent);
+    try {
+      // Get current user
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      
+      if (authError) {
+        throw new Error('Authentication failed');
+      }
+
+      if (!session?.user) {
+        throw new Error('You must be signed in to create an agent');
+      }
+
+      if (agent) {
+        // Update existing agent
+        const updateData: UpdateAgentData = {
+          name: formData.name,
+          personality: formData.personality,
+          description: formData.description,
+          interests: formData.interests,
+          is_active: formData.is_active,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          image_url: formData.image_url || '/images/placeholder.jpg',
+          data_sources: formData.data_sources,
+          fee_amount: formData.fee_amount,
+          fee_token: formData.fee_token
+        };
+
+        const updatedAgent = await updateAgent(agent.id, updateData);
+        
+        if (!updatedAgent) {
+          throw new Error('Failed to update agent');
+        }
+
+        console.log('Updated agent:', updatedAgent);
+      } else {
+        // Create new agent
+        const createData: CreateAgentData = {
+          name: formData.name,
+          slug: generateSlug(formData.name),
+          personality: formData.personality,
+          description: formData.description,
+          interests: formData.interests,
+          is_active: formData.is_active,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          image_url: formData.image_url || '/images/placeholder.jpg',
+          data_sources: formData.data_sources,
+          fee_amount: formData.fee_amount,
+          fee_token: formData.fee_token,
+          auth_user_id: session.user.id
+        };
+
+        const newAgent = await createAgent(createData);
+        
+        if (!newAgent) {
+          throw new Error('Failed to create agent');
+        }
+
+        console.log('Created new agent:', newAgent);
+      }
+
+      onSubmit();
+    } catch (err) {
+      console.error('Error submitting agent:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    onSubmit();
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 bg-card p-6 rounded-lg border shadow-lg">
+      {error && (
+        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded" role="alert">
+          {error}
+        </div>
+      )}
+
       <div className="space-y-2">
         <label htmlFor="name" className="block text-sm font-medium text-foreground">
           Name
@@ -142,7 +190,7 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
       </div>
 
       <div>
-        <label htmlFor="personality" className="block text-sm font-medium text-gray-200">
+        <label htmlFor="personality" className="block text-sm font-medium text-foreground">
           Personality
         </label>
         <textarea
@@ -150,14 +198,14 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
           id="personality"
           value={formData.personality}
           onChange={handleChange}
-          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white h-32"
+          className="w-full p-2 border border-border rounded-md bg-background text-foreground h-32"
           placeholder="Describe your agent's personality, tone, and backstory..."
           required
         />
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-200">
+        <label htmlFor="description" className="block text-sm font-medium text-foreground">
           Description
         </label>
         <textarea
@@ -165,38 +213,44 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
           id="description"
           value={formData.description}
           onChange={handleChange}
-          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white h-32"
+          className="w-full p-2 border border-border rounded-md bg-background text-foreground h-32"
           placeholder="Describe what your agent does and how it helps users..."
           required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-200">
+        <label className="block text-sm font-medium text-foreground">
           Location
         </label>
         <div className="grid grid-cols-2 gap-4">
           <div>
+            <label htmlFor="latitude" className="block text-xs text-muted-foreground mb-1">
+              Latitude
+            </label>
             <input
               type="number"
               name="latitude"
               id="latitude"
               value={formData.latitude.toString()}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+              className="w-full p-2 border border-border rounded-md bg-background text-foreground"
               placeholder="E.g., 30.2672"
               step="any"
               required
             />
           </div>
           <div>
+            <label htmlFor="longitude" className="block text-xs text-muted-foreground mb-1">
+              Longitude
+            </label>
             <input
               type="number"
               name="longitude"
               id="longitude"
               value={formData.longitude.toString()}
               onChange={handleChange}
-              className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+              className="w-full p-2 border border-border rounded-md bg-background text-foreground"
               placeholder="E.g., -97.7431"
               step="any"
               required
@@ -206,7 +260,7 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
       </div>
 
       <div>
-        <label htmlFor="image" className="block text-sm font-medium text-gray-200">
+        <label htmlFor="image" className="block text-sm font-medium text-foreground">
           Agent Image
         </label>
         <div className="mt-2 space-y-4">
@@ -233,17 +287,17 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
             />
             <label
               htmlFor="image"
-              className="block w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white text-center cursor-pointer hover:bg-gray-700"
+              className="block w-full p-2 border border-border rounded-md bg-background text-foreground text-center cursor-pointer hover:bg-muted"
             >
               Upload Image
             </label>
             
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-700"></div>
+                <div className="w-full border-t border-border"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-900 text-gray-400">Or</span>
+                <span className="px-2 bg-card text-muted-foreground">Or</span>
               </div>
             </div>
             
@@ -253,7 +307,7 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
               id="image_url"
               value={formData.image_url}
               onChange={handleImageUrlChange}
-              className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+              className="w-full p-2 border border-border rounded-md bg-background text-foreground"
               placeholder="Enter image URL"
             />
           </div>
@@ -261,7 +315,7 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-200">
+        <label className="block text-sm font-medium text-foreground">
           Data Sources
         </label>
         <div className="space-y-2">
@@ -280,47 +334,16 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
                       : prev.data_sources.filter((id) => id !== value),
                   }));
                 }}
-                className="rounded border-gray-700 text-blue-500 focus:ring-blue-500"
+                className="rounded border-border text-primary focus:ring-primary"
               />
-              <span className="text-gray-200">{source.name}</span>
+              <span className="text-foreground">{source.name}</span>
             </label>
           ))}
         </div>
       </div>
 
       <div>
-        <label htmlFor="location" className="block text-sm font-medium text-gray-200">
-          Location Description
-        </label>
-        <input
-          type="text"
-          name="location"
-          id="location"
-          value={formData.location}
-          onChange={handleChange}
-          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-          placeholder="E.g., Downtown Austin, South Congress"
-          required
-        />
-      </div>
-
-      <div>
-        <label htmlFor="twitter_handle" className="block text-sm font-medium text-gray-200">
-          Twitter Handle
-        </label>
-        <input
-          type="text"
-          name="twitter_handle"
-          id="twitter_handle"
-          value={formData.twitter_handle}
-          onChange={handleChange}
-          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-          placeholder="@username"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="interests" className="block text-sm font-medium text-gray-200">
+        <label htmlFor="interests" className="block text-sm font-medium text-foreground">
           Interests (comma-separated)
         </label>
         <input
@@ -332,82 +355,45 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
             const interestsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
             setFormData(prev => ({ ...prev, interests: interestsArray }));
           }}
-          className="mt-1 block w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
+          className="mt-1 block w-full p-2 border border-border rounded-md bg-background text-foreground"
           placeholder="Enter interests separated by commas"
         />
       </div>
 
-      <div>
-        <label htmlFor="likes" className="block text-sm font-medium text-gray-200">
-          Likes (comma-separated)
-        </label>
-        <input
-          type="text"
-          name="likes"
-          id="likes"
-          value={formData.likes.join(', ')}
-          onChange={(e) => {
-            const likesArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
-            setFormData(prev => ({ ...prev, likes: likesArray }));
-          }}
-          className="mt-1 block w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-          placeholder="Enter likes separated by commas"
-        />
-      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="fee_amount" className="block text-sm font-medium text-foreground">
+            Fee Amount
+          </label>
+          <input
+            type="number"
+            name="fee_amount"
+            id="fee_amount"
+            value={formData.fee_amount}
+            onChange={(e) => setFormData(prev => ({ ...prev, fee_amount: parseFloat(e.target.value) || 0 }))}
+            className="w-full p-2 border border-border rounded-md bg-background text-foreground"
+            placeholder="0"
+            min="0"
+            step="0.01"
+          />
+        </div>
 
-      <div>
-        <label htmlFor="dislikes" className="block text-sm font-medium text-gray-200">
-          Dislikes (comma-separated)
-        </label>
-        <input
-          type="text"
-          name="dislikes"
-          id="dislikes"
-          value={formData.dislikes.join(', ')}
-          onChange={(e) => {
-            const dislikesArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
-            setFormData(prev => ({ ...prev, dislikes: dislikesArray }));
-          }}
-          className="mt-1 block w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-          placeholder="Enter dislikes separated by commas"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="fun_facts" className="block text-sm font-medium text-gray-200">
-          Fun Facts
-        </label>
-        <textarea
-          name="fun_facts"
-          id="fun_facts"
-          value={formData.fun_facts.join(', ')}
-          onChange={(e) => {
-            const funFacts = e.target.value.split(',').map((item) => item.trim()).filter(Boolean);
-            setFormData((prev) => ({ ...prev, fun_facts: funFacts }));
-          }}
-          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-          placeholder="Comma-separated list of fun facts about the agent"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="category" className="block text-sm font-medium text-gray-200">
-          Category
-        </label>
-        <select
-          name="category"
-          id="category"
-          value={formData.category}
-          onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as keyof typeof voiceConfigs }))}
-          className="w-full p-2 border border-gray-700 rounded-md bg-gray-800 text-white"
-          required
-        >
-          {Object.keys(voiceConfigs).map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
+        <div>
+          <label htmlFor="fee_token" className="block text-sm font-medium text-foreground">
+            Fee Token
+          </label>
+          <select
+            name="fee_token"
+            id="fee_token"
+            value={formData.fee_token}
+            onChange={(e) => setFormData(prev => ({ ...prev, fee_token: e.target.value }))}
+            className="w-full p-2 border border-border rounded-md bg-background text-foreground"
+          >
+            <option value="ETH">ETH</option>
+            <option value="USD">USD</option>
+            <option value="BTC">BTC</option>
+          </select>
+        </div>
       </div>
 
       <div className="flex items-center">
@@ -417,9 +403,9 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
           id="is_active"
           checked={formData.is_active}
           onChange={(e) => setFormData((prev) => ({ ...prev, is_active: e.target.checked }))}
-          className="rounded border-gray-700 text-blue-500 focus:ring-blue-500"
+          className="rounded border-border text-primary focus:ring-primary"
         />
-        <label htmlFor="is_active" className="ml-2 block text-sm text-gray-200">
+        <label htmlFor="is_active" className="ml-2 block text-sm text-foreground">
           Active
         </label>
       </div>
@@ -427,9 +413,10 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
       <div className="flex justify-end space-x-4">
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          disabled={isSubmitting}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {agent ? 'Update Agent' : 'Create Agent'}
+          {isSubmitting ? 'Saving...' : agent ? 'Update Agent' : 'Create Agent'}
         </button>
       </div>
     </form>
