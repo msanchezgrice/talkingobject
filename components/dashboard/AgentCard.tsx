@@ -6,12 +6,8 @@ import { useUser } from '@clerk/nextjs';
 import { DatabaseAgent, deleteAgent } from '@/lib/database/agents';
 import { ClerkDatabaseAgent, deleteClerkAgent } from '@/lib/database/clerk-agents';
 import { supabase } from '@/lib/supabase/client';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { VoicePlayer } from '@/components/VoicePlayer';
+import Image from 'next/image';
 
 interface AgentCardProps {
   agent: DatabaseAgent | ClerkDatabaseAgent;
@@ -126,9 +122,11 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
           <div className="flex items-center space-x-4">
             <div className="relative">
               {agent.image_url ? (
-                <img 
+                <Image 
                   src={agent.image_url} 
                   alt={agent.name}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 rounded-full object-cover border-2 border-white/50 shadow-md"
                 />
               ) : (

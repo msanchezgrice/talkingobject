@@ -16,7 +16,6 @@ export default function TweetCard({ tweet, agent }: TweetCardProps) {
   const [commentText, setCommentText] = useState('');
   const [showComments, setShowComments] = useState(false);
   const [localTweet, setLocalTweet] = useState<Tweet>(tweet);
-  const [isFollowing, setIsFollowing] = useState(false);
   
   const formatDate = (date: Date) => {
     // Format date for display (e.g., "2h ago", "Apr 12", etc.)
@@ -72,11 +71,7 @@ export default function TweetCard({ tweet, agent }: TweetCardProps) {
     }
   };
 
-  const handleFollow = () => {
-    setIsFollowing(!isFollowing);
-    // Here you would typically update a database or state management
-    // For now we just toggle the local state
-  };
+
 
   return (
     <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 hover:shadow-xl hover:bg-white/80 transition-all duration-300">
