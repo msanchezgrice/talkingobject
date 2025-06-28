@@ -252,5 +252,30 @@ export const serverAgentQueries = {
       console.error('Error in serverAgentQueries.deleteAgent:', error);
       return false;
     }
+  },
+
+  // Clerk-compatible server functions
+  async getClerkAgentBySlug(slug: string): Promise<DatabaseAgent | null> {
+    try {
+      const supabase = await createServerSupabaseClient();
+      const { data, error } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return null;
+        }
+        console.error('Error fetching agent by slug (server):', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in serverAgentQueries.getClerkAgentBySlug:', error);
+      return null;
+    }
   }
 }; 
