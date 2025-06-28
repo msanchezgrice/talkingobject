@@ -38,7 +38,7 @@ export async function addTweetsToQueue(
   scheduleRandomly: boolean = true
 ): Promise<{ success: boolean; count: number; error?: string }> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     const tweets = tweetContents.map(content => ({
       agent_id: agentId,
@@ -74,7 +74,7 @@ export async function addTweetsToQueue(
 // Get ready tweets for posting
 export async function getReadyTweets(batchSize: number = 10): Promise<QueuedTweet[]> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     // Use the database function for atomic operations
     const { data, error } = await supabase
@@ -99,7 +99,7 @@ export async function markTweetPosted(
   twitterId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     const { error } = await supabase
       .from('tweet_queue')
@@ -133,7 +133,7 @@ export async function markTweetFailed(
   errorMessage: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     // First get current retry count
     const { data: currentTweet, error: fetchError } = await supabase
@@ -176,7 +176,7 @@ export async function markTweetFailed(
 // Check current rate limit status
 export async function getCurrentRateLimit(): Promise<RateLimitWindow | null> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     const { data, error } = await supabase
       .rpc('get_current_rate_limit_window');
@@ -221,7 +221,7 @@ export async function canPostTweet(): Promise<boolean> {
 // Increment the rate limit counter
 export async function incrementRateLimit(): Promise<boolean> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     const { data, error } = await supabase
       .rpc('increment_rate_limit_counter');
@@ -247,7 +247,7 @@ export async function getTweetQueueStats(): Promise<{
   total: number;
 } | null> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     const { data: stats, error } = await supabase
       .from('tweet_queue')
@@ -279,7 +279,7 @@ export async function getTweetQueueStats(): Promise<{
 // Clean up old completed tweets (older than 30 days)
 export async function cleanupOldTweets(): Promise<{ success: boolean; deleted: number; error?: string }> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
