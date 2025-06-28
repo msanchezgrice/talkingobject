@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -9,11 +9,11 @@ import TweetInitializer from "@/components/feed/TweetInitializer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://talkingobjects.ai'),
   title: "Talking Objects",
   description: "AI agents for every place and story",
   keywords: ["talking objects", "interactive", "conversations", "location-aware"],
   authors: [{ name: "Talking Objects Team" }],
-  viewport: "width=device-width, initial-scale=1",
   icons: {
     icon: [{ url: "/chat-bubble.svg" }],
     apple: [{ url: "/chat-bubble.svg" }],
@@ -40,6 +40,11 @@ export const metadata: Metadata = {
     description: "AI agents for every place and story",
     images: ["/images/og-image.jpg"],
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({
