@@ -4,37 +4,41 @@ import { useEffect, useState } from 'react';
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import AgentForm from "@/components/dashboard/AgentForm";
-import { getAgentById, PlaceholderAgent } from '@/lib/placeholder-agents';
+import { getAgentById, DatabaseAgent } from '@/lib/database/agents';
 
 export default function EditAgentPage() {
   const params = useParams();
   const router = useRouter();
-  const [agent, setAgent] = useState<PlaceholderAgent | null>(null);
+  const [agent, setAgent] = useState<DatabaseAgent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     // Fetch the agent when the component mounts
-    if (params.id) {
-      try {
-        const id = Array.isArray(params.id) ? params.id[0] : params.id;
-        const foundAgent = getAgentById(id);
-        
-        if (foundAgent) {
-          setAgent(foundAgent);
-        } else {
-          setError('Agent not found');
-          setTimeout(() => {
-            router.push('/dashboard');
-          }, 2000);
+    async function fetchAgent() {
+      if (params.id) {
+        try {
+          const id = Array.isArray(params.id) ? params.id[0] : params.id;
+          const foundAgent = await getAgentById(id);
+          
+          if (foundAgent) {
+            setAgent(foundAgent);
+          } else {
+            setError('Agent not found');
+            setTimeout(() => {
+              router.push('/dashboard');
+            }, 2000);
+          }
+        } catch (err) {
+          setError('Error loading agent');
+          console.error(err);
+        } finally {
+          setLoading(false);
         }
-      } catch (err) {
-        setError('Error loading agent');
-        console.error(err);
-      } finally {
-        setLoading(false);
       }
     }
+    
+    fetchAgent();
   }, [params.id, router]);
 
   const handleSubmit = () => {
