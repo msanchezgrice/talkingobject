@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react';
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import AgentForm from "@/components/dashboard/AgentForm";
-import { getAgentById, DatabaseAgent } from '@/lib/database/agents';
+import { getClerkAgentById, ClerkDatabaseAgent } from '@/lib/database/clerk-agents';
 
 export default function EditAgentPage() {
   const params = useParams();
   const router = useRouter();
-  const [agent, setAgent] = useState<DatabaseAgent | null>(null);
+  const [agent, setAgent] = useState<ClerkDatabaseAgent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -19,7 +19,7 @@ export default function EditAgentPage() {
       if (params.id) {
         try {
           const id = Array.isArray(params.id) ? params.id[0] : params.id;
-          const foundAgent = await getAgentById(id);
+          const foundAgent = await getClerkAgentById(id);
           
           if (foundAgent) {
             setAgent(foundAgent);

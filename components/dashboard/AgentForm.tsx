@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { createAgent, updateAgent, DatabaseAgent, CreateAgentData, UpdateAgentData } from '@/lib/database/agents';
-import { supabase } from '@/lib/supabase/client';
+import { useUser } from '@clerk/nextjs';
+import { createClerkAgent, updateClerkAgent, ClerkDatabaseAgent, CreateClerkAgentData, UpdateClerkAgentData } from '@/lib/database/clerk-agents';
 import Image from 'next/image';
 
 // Data sources available to agents
@@ -30,11 +30,12 @@ interface AgentFormData {
 }
 
 type AgentFormProps = {
-  agent?: DatabaseAgent;
+  agent?: ClerkDatabaseAgent;
   onSubmit: () => void;
 };
 
 export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
+  const { user } = useUser();
   const [formData, setFormData] = useState<AgentFormData>({
     name: agent?.name || '',
     personality: agent?.personality || '',
@@ -94,20 +95,14 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
     setError(null);
 
     try {
-      // Get current user
-      const { data: { session }, error: authError } = await supabase.auth.getSession();
-      
-      if (authError) {
-        throw new Error('Authentication failed');
-      }
-
-      if (!session?.user) {
+      // Check if user is signed in with Clerk
+      if (!user) {
         throw new Error('You must be signed in to create an agent');
       }
 
       if (agent) {
         // Update existing agent
-        const updateData: UpdateAgentData = {
+        const updateData: UpdateClerkAgentData = {
           name: formData.name,
           personality: formData.personality,
           description: formData.description,
@@ -121,7 +116,7 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
           fee_token: formData.fee_token
         };
 
-        const updatedAgent = await updateAgent(agent.id, updateData);
+        const updatedAgent = await updateClerkAgent(agent.id, updateData);
         
         if (!updatedAgent) {
           throw new Error('Failed to update agent');
@@ -130,7 +125,7 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
         console.log('Updated agent:', updatedAgent);
       } else {
         // Create new agent
-        const createData: CreateAgentData = {
+        const createData: CreateClerkAgentData = {
           name: formData.name,
           slug: generateSlug(formData.name),
           personality: formData.personality,
@@ -143,10 +138,10 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
           data_sources: formData.data_sources,
           fee_amount: formData.fee_amount,
           fee_token: formData.fee_token,
-          auth_user_id: session.user.id
+          clerk_user_id: user.id
         };
 
-        const newAgent = await createAgent(createData);
+        const newAgent = await createClerkAgent(createData);
         
         if (!newAgent) {
           throw new Error('Failed to create agent');

@@ -191,6 +191,60 @@ export async function deleteClerkAgent(id: string, clerkUserId: string): Promise
 }
 
 /**
+ * Get agent by slug (Clerk-compatible)
+ */
+export async function getClerkAgentBySlug(slug: string): Promise<ClerkDatabaseAgent | null> {
+  try {
+    const { data, error } = await supabase
+      .from('agents')
+      .select('*')
+      .eq('slug', slug)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No rows returned
+        return null;
+      }
+      console.error('Error fetching agent by slug:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in getClerkAgentBySlug:', error);
+    return null;
+  }
+}
+
+/**
+ * Get agent by ID (Clerk-compatible)
+ */
+export async function getClerkAgentById(id: string): Promise<ClerkDatabaseAgent | null> {
+  try {
+    const { data, error } = await supabase
+      .from('agents')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No rows returned
+        return null;
+      }
+      console.error('Error fetching agent by id:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in getClerkAgentById:', error);
+    return null;
+  }
+}
+
+/**
  * Generate a URL-safe slug from agent name
  */
 export function generateSlugFromName(name: string): string {
