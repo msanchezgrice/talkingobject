@@ -2,75 +2,46 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useUser } from '@clerk/nextjs';
 import { AgentCard } from "@/components/dashboard/AgentCard";
-import { getUserAgents, DatabaseAgent } from "@/lib/database/agents";
-import { supabase } from "@/lib/supabase/client";
-import type { User } from '@supabase/supabase-js';
+import { getClerkUserAgents, ClerkDatabaseAgent } from "@/lib/database/clerk-agents";
 
 export default function DashboardPage() {
-  const [agents, setAgents] = useState<DatabaseAgent[]>([]);
-  const [user, setUser] = useState<User | null>(null);
+  const { isLoaded, isSignedIn, user } = useUser();
+  const [agents, setAgents] = useState<ClerkDatabaseAgent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
-    const loadUserAndAgents = async () => {
+    const loadUserAgents = async () => {
+      if (!isLoaded) return; // Wait for Clerk to load
+      
       try {
-        // Get current user
-        const { data: { session }, error: authError } = await supabase.auth.getSession();
-        
-        if (authError) {
-          console.error('Auth error:', authError);
-          setError('Authentication failed');
-          setIsLoading(false);
-          return;
-        }
-
-        if (!session?.user) {
+        if (!isSignedIn || !user) {
           setError('Please sign in to view your agents');
           setIsLoading(false);
           return;
         }
 
-        setUser(session.user);
-
-        // Get user's agents
-        const userAgents = await getUserAgents(session.user.id);
+        // Get user's agents using Clerk user ID
+        const userAgents = await getClerkUserAgents(user.id);
         setAgents(userAgents);
         
       } catch (err) {
-        console.error('Error loading user and agents:', err);
+        console.error('Error loading user agents:', err);
         setError('Failed to load your agents');
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadUserAndAgents();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setAgents([]);
-        } else if (event === 'SIGNED_IN' && session?.user) {
-          setUser(session.user);
-          const userAgents = await getUserAgents(session.user.id);
-          setAgents(userAgents);
-        }
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+    loadUserAgents();
+  }, [isLoaded, isSignedIn, user]);
 
   const refreshAgents = async () => {
     if (user) {
       try {
-        const userAgents = await getUserAgents(user.id);
+        const userAgents = await getClerkUserAgents(user.id);
         setAgents(userAgents);
       } catch (err) {
         console.error('Error refreshing agents:', err);
@@ -79,7 +50,19 @@ export default function DashboardPage() {
     }
   };
 
-  if (!user && !isLoading) {
+  if (!isLoaded || isLoading) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
     return (
       <div className="min-h-screen bg-background text-foreground">
         <div className="container mx-auto px-4 py-8">
@@ -89,7 +72,7 @@ export default function DashboardPage() {
               Please sign in to view and manage your agents.
             </p>
             <Link 
-              href="/login" 
+              href="/sign-in" 
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2 px-6 rounded-lg transition-colors"
             >
               Sign In
@@ -140,11 +123,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent"></div>
-          </div>
-        ) : agents.length === 0 ? (
+        {agents.length === 0 ? (
           <div className="bg-card rounded-lg shadow p-8 mb-8 border text-center">
             <div className="max-w-md mx-auto">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">

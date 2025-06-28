@@ -1,38 +1,21 @@
-import { NextResponse } from 'next/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-export async function middleware() {
-  const response = NextResponse.next();
-  
-  // Add Permissions Policy headers to allow microphone access
-  response.headers.set(
-    'Permissions-Policy',
-    'microphone=(self), camera=(self), geolocation=(self)'
-  );
-  
-  // Also add Feature Policy for broader browser support
-  response.headers.set(
-    'Feature-Policy',
-    'microphone \'self\'; camera \'self\'; geolocation \'self\''
-  );
-  
-  // Add Cross-Origin headers for audio processing
-  response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
-  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-  
-  return response;
-}
+const isProtectedRoute = createRouteMatcher([
+  '/dashboard(.*)',
+  '/agent/(.*)/edit'
+]);
 
-// Define which routes this middleware should run on
+export default clerkMiddleware(async (auth, req) => {
+  if (isProtectedRoute(req)) {
+    await auth.protect();
+  }
+});
+
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public (public files)
-     * - api (API routes that don't need auth)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public|api/public).*)',
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
   ],
 }; 

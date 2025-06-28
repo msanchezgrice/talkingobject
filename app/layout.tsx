@@ -1,23 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import { ClerkProvider } from "@clerk/nextjs";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import TweetInitializer from "@/components/feed/TweetInitializer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Talking Objects",
-  description: "Bring real-world objects to life with interactive conversations",
+  description: "AI agents for every place and story",
   keywords: ["talking objects", "interactive", "conversations", "location-aware"],
   authors: [{ name: "Talking Objects Team" }],
   viewport: "width=device-width, initial-scale=1",
@@ -30,7 +23,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://talkingobjects.ai",
     title: "Talking Objects",
-    description: "Bring real-world objects to life with interactive conversations",
+    description: "AI agents for every place and story",
     siteName: "Talking Objects",
     images: [
       {
@@ -44,28 +37,30 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Talking Objects",
-    description: "Bring real-world objects to life with interactive conversations",
+    description: "AI agents for every place and story",
     images: ["/images/og-image.jpg"],
   },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen bg-background text-foreground`}
-      >
-        <TweetInitializer />
-        <Header />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className={inter.className}>
+          <TweetInitializer />
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-1">
+              {children}
+            </main>
+            <Footer />
+          </div>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

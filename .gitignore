@@ -52,3 +52,6 @@ logs
 # Cache
 .eslintcache
 .cache/
+
+# clerk configuration (can include secrets)
+/.clerk/
