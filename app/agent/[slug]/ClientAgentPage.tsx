@@ -39,7 +39,17 @@ interface ClientAgentPageProps {
 }
 
 export default function ClientAgentPage({ agent }: ClientAgentPageProps) {
+  console.log('🎨 [CLIENT] ClientAgentPage rendering with agent:', agent.name);
+  console.log('🎨 [CLIENT] Agent data:', { 
+    id: agent.id, 
+    slug: agent.slug, 
+    name: agent.name,
+    hasDescription: !!agent.description,
+    isActive: agent.is_active 
+  });
+  
   const placeholderAgent = convertToPlaceholderAgent(agent);
+  console.log('🔄 [CLIENT] Converted to placeholder format:', placeholderAgent.name);
   
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">

@@ -256,17 +256,20 @@ export const serverAgentQueries = {
 
   // Clerk-compatible server functions
   async getClerkAgentBySlug(slug: string): Promise<DatabaseAgent | null> {
+    // Use console.error for better visibility in Vercel logs
+    console.error('🔍 [SERVER] Attempting to fetch agent by slug:', slug);
+    console.error('🌐 [SERVER] Environment check:', {
+      hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      url: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 50) + '...',
+      nodeEnv: process.env.NODE_ENV
+    });
+    
     try {
-      console.log('🔍 Attempting to fetch agent by slug:', slug);
-      console.log('🌐 Environment check:', {
-        hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-        hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-        url: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30) + '...'
-      });
-      
       const supabase = await createServerSupabaseClient();
-      console.log('✅ Supabase client created successfully');
+      console.error('✅ [SERVER] Supabase client created successfully');
       
+      console.error('🔍 [SERVER] Executing query for slug:', slug);
       const { data, error } = await supabase
         .from('agents')
         .select('*')
@@ -275,22 +278,31 @@ export const serverAgentQueries = {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          console.log('🔍 No agent found with slug:', slug);
+          console.error('📭 [SERVER] No agent found with slug:', slug);
           return null;
         }
-        console.error('❌ Error fetching agent by slug (server):', {
+        console.error('❌ [SERVER] Database error:', {
           message: error.message,
           details: error.details,
           hint: error.hint,
-          code: error.code
+          code: error.code,
+          slug: slug
         });
         return null;
       }
 
-      console.log('✅ Agent found:', data ? data.name : 'null');
+      console.error('✅ [SERVER] Agent found successfully:', {
+        name: data ? data.name : 'null',
+        id: data ? data.id : 'null',
+        slug: data ? data.slug : 'null'
+      });
       return data;
     } catch (error) {
-      console.error('💥 Error in serverAgentQueries.getClerkAgentBySlug:', error);
+      console.error('💥 [SERVER] Exception in getClerkAgentBySlug:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        slug: slug
+      });
       return null;
     }
   }
