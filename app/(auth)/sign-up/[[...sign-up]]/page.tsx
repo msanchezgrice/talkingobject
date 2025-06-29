@@ -1,5 +1,8 @@
 import { SignUp } from '@clerk/nextjs';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export default function SignUpPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">

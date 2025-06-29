@@ -1,6 +1,9 @@
 import AuthForm from "@/components/auth/AuthForm";
 import Link from "next/link";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export default function LoginPage() {
   return (
     <div className="flex flex-col min-h-screen bg-black text-white">

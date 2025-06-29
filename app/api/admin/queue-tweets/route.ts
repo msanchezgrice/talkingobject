@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Helper function to determine agent category
-function determineAgentCategory(agent: any): keyof typeof sampleTweets {
+function determineAgentCategory(agent: { name: string; description?: string | null }): keyof typeof sampleTweets {
   const name = agent.name.toLowerCase();
   const description = (agent.description || '').toLowerCase();
   

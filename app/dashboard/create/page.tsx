@@ -4,6 +4,9 @@ import { useRouter } from 'next/navigation';
 import Link from "next/link";
 import AgentForm from "@/components/dashboard/AgentForm";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export default function CreateAgentPage() {
   const router = useRouter();
 

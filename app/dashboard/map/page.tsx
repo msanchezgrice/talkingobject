@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { getAllAgents, PlaceholderAgent } from '@/lib/placeholder-agents';
 import MapComponent from '@/components/map/MapComponent';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export default function MapPage() {
   const [agents, setAgents] = useState<PlaceholderAgent[]>([]);
   const [isLoading, setIsLoading] = useState(true);

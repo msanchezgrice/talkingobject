@@ -52,20 +52,28 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <ClerkProvider>
-      <html lang="en">
-        <body className={inter.className}>
-          <TweetInitializer />
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-1">
-              {children}
-            </main>
-            <Footer />
-          </div>
-        </body>
-      </html>
-    </ClerkProvider>
+  const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const skipClerk = process.env.SKIP_CLERK_BUILD === 'true';
+  
+  const content = (
+    <html lang="en">
+      <body className={inter.className}>
+        <TweetInitializer />
+        <div className="min-h-screen flex flex-col">
+          <Header />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </div>
+      </body>
+    </html>
   );
+
+  // Only use ClerkProvider if we have a valid key and not skipping during build
+  if (clerkKey && clerkKey.startsWith('pk_') && !skipClerk) {
+    return <ClerkProvider publishableKey={clerkKey}>{content}</ClerkProvider>;
+  }
+  
+  return content;
 }

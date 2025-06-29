@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 const historicSites = [
   {
     id: 1,

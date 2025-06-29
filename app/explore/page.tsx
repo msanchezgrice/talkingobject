@@ -6,6 +6,9 @@ import { getAllPublicAgents, DatabaseAgent } from '@/lib/database/agents';
 import { Accordion, AccordionItem } from '@/components/ui/accordion';
 import { AgentCard } from '@/components/explore/AgentCard';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // Helper functions for grouping (adapted for DatabaseAgent)
 function extractCityFromLocation(agent: DatabaseAgent): string {
   // Extract city from coordinates or use "Austin" as default

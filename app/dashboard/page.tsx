@@ -6,6 +6,9 @@ import { useUser } from '@clerk/nextjs';
 import { AgentCard } from "@/components/dashboard/AgentCard";
 import { getClerkUserAgents, ClerkDatabaseAgent } from "@/lib/database/clerk-agents";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export default function DashboardPage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const [agents, setAgents] = useState<ClerkDatabaseAgent[]>([]);

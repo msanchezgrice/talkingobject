@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   /* Production-optimized config for Vercel deployment */
   reactStrictMode: true,
   swcMinify: true, // Uses SWC minifier instead of Terser for faster builds
+  // Force dynamic rendering for all pages during build
+  experimental: {
+    forceSwcTransforms: true,
+  },
   images: {
     domains: [
       'via.placeholder.com', 

@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // Define the user type for local testing
 type User = {
   id: string;

@@ -3,10 +3,13 @@
 import { useState, useEffect } from 'react';
 import { placeholderAgents as getAgents, PlaceholderAgent } from '@/lib/placeholder-agents';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
+import nextDynamic from 'next/dynamic';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 
 // Import the map component with SSR disabled
-const MapComponent = dynamic(
+const MapComponent = nextDynamic(
   () => import('@/components/map/MapComponent'),
   { ssr: false }
 );

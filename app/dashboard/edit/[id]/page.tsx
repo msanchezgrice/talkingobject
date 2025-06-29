@@ -6,6 +6,9 @@ import { useParams, useRouter } from "next/navigation";
 import AgentForm from "@/components/dashboard/AgentForm";
 import { getClerkAgentById, ClerkDatabaseAgent } from '@/lib/database/clerk-agents';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 export default function EditAgentPage() {
   const params = useParams();
   const router = useRouter();

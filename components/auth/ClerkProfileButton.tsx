@@ -2,8 +2,10 @@
 
 import { UserButton, useUser, SignInButton } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import dynamic from 'next/dynamic';
 
-export function ClerkProfileButton() {
+function ClerkProfileButtonInner() {
   const { isSignedIn, user } = useUser();
 
   if (!isSignedIn) {
@@ -30,4 +32,19 @@ export function ClerkProfileButton() {
       />
     </div>
   );
+}
+
+const DynamicClerkProfileButton = dynamic(() => Promise.resolve(ClerkProfileButtonInner), {
+  ssr: false,
+  loading: () => (
+    <Link href="/sign-in">
+      <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+        Sign In
+      </Button>
+    </Link>
+  ),
+});
+
+export function ClerkProfileButton() {
+  return <DynamicClerkProfileButton />;
 } 

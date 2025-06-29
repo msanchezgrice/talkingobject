@@ -50,16 +50,20 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform the data to include agent info
-    const transformedTweets: DatabaseTweet[] = (tweets || []).map((tweet: any) => ({
-      id: tweet.id,
-      agent_id: tweet.agent_id,
-      payload: tweet.payload,
-      posted_at: tweet.posted_at,
-      twitter_id: tweet.twitter_id,
-      agent_name: tweet.agents?.name,
-      agent_slug: tweet.agents?.slug,
-      agent_image_url: tweet.agents?.image_url
-    }));
+    const transformedTweets: DatabaseTweet[] = (tweets || []).map((tweet) => {
+      // Handle the case where agents might be an array or object
+      const agent = Array.isArray(tweet.agents) ? tweet.agents[0] : tweet.agents;
+      return {
+        id: tweet.id,
+        agent_id: tweet.agent_id,
+        payload: tweet.payload,
+        posted_at: tweet.posted_at,
+        twitter_id: tweet.twitter_id,
+        agent_name: agent?.name,
+        agent_slug: agent?.slug,
+        agent_image_url: agent?.image_url
+      };
+    });
 
     return NextResponse.json({
       tweets: transformedTweets,
