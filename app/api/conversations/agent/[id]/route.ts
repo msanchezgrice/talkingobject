@@ -31,6 +31,10 @@ export async function GET(
 
     const supabase = await createServerSupabaseClient();
 
+    console.log('Conversation History Debug:');
+    console.log('- User ID:', userId);
+    console.log('- Agent ID:', agentId);
+
     // Verify the user owns this agent
     const { data: agent, error: agentError } = await supabase
       .from('agents')
@@ -39,7 +43,10 @@ export async function GET(
       .eq('clerk_user_id', userId)
       .single();
 
+    console.log('- Agent query result:', { agent, agentError });
+
     if (agentError || !agent) {
+      console.log('- Agent not found or unauthorized');
       return NextResponse.json({ error: 'Agent not found or unauthorized' }, { status: 404 });
     }
 
@@ -58,6 +65,8 @@ export async function GET(
       .eq('agent_id', agentId)
       .order('last_activity_at', { ascending: false })
       .range(offset, offset + limit - 1);
+
+    console.log('- Sessions query result:', { sessionsCount: sessions?.length, sessionsError });
 
     if (sessionsError) {
       console.error('Error fetching conversation sessions:', sessionsError);

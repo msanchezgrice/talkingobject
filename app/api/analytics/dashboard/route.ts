@@ -60,6 +60,11 @@ export async function GET() {
       console.error('Error fetching conversation data:', conversationError);
     }
 
+    console.log('Dashboard Analytics Debug:');
+    console.log('- Agent IDs:', agentIds);
+    console.log('- Conversation data count:', (conversationData || []).length);
+    console.log('- Sample conversation data:', conversationData?.slice(0, 2));
+
     // Calculate unique conversations and recent activity
     const uniqueConversations = new Set();
     const recentConversations = new Set();
@@ -74,6 +79,9 @@ export async function GET() {
 
     const totalChats = uniqueConversations.size;
     const chatsLast24h = recentConversations.size;
+
+    console.log('- Total unique conversations:', totalChats);
+    console.log('- Chats last 24h:', chatsLast24h);
 
     // Get total tweets across all user's agents
     const { data: tweetData, error: tweetError } = await supabase
