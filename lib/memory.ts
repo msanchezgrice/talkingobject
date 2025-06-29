@@ -142,7 +142,7 @@ export async function storeUserMemory(
   value: string
 ): Promise<UserMemory | null> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const embedding = await generateEmbedding(`${key}: ${value}`);
 
     const { data, error } = await supabase
@@ -178,7 +178,7 @@ export async function searchUserMemories(
   limit: number = 3
 ): Promise<MemorySearchResult[]> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const queryEmbedding = await generateEmbedding(query);
 
     const { data, error } = await supabase.rpc('search_user_memory', {
@@ -206,7 +206,7 @@ export async function getRecentMessages(
   limit: number = 20
 ): Promise<ConversationMessage[]> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
 
     const { data, error } = await supabase
       .from('conversation_messages')
@@ -237,7 +237,7 @@ export async function storeConversationMessage(
   isMemoryWorthy: boolean = false
 ): Promise<ConversationMessage | null> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
 
     const { data, error } = await supabase
       .from('conversation_messages')
@@ -271,7 +271,7 @@ export async function generateDailySummary(
   agentName: string
 ): Promise<DailySummary | null> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
 
     // Get all messages for the agent on this date
     const { data: messages, error: messagesError } = await supabase
@@ -349,7 +349,7 @@ export async function searchDailySummaries(
   limit: number = 3
 ): Promise<SummarySearchResult[]> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const queryEmbedding = await generateEmbedding(query);
 
     const { data, error } = await supabase.rpc('search_daily_summaries', {
