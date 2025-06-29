@@ -53,7 +53,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const clerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  const skipClerk = process.env.SKIP_CLERK_BUILD === 'true';
   
   const content = (
     <html lang="en">
@@ -70,8 +69,8 @@ export default function RootLayout({
     </html>
   );
 
-  // Only use ClerkProvider if we have a valid key and not skipping during build
-  if (clerkKey && clerkKey.startsWith('pk_') && !skipClerk) {
+  // Only use ClerkProvider if we have a valid key
+  if (clerkKey && clerkKey.startsWith('pk_')) {
     return <ClerkProvider publishableKey={clerkKey}>{content}</ClerkProvider>;
   }
   

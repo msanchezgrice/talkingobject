@@ -46,5 +46,16 @@ const DynamicClerkProfileButton = dynamic(() => Promise.resolve(ClerkProfileButt
 });
 
 export function ClerkProfileButton() {
+  // Check if we're in browser and have Clerk key before rendering dynamic component
+  if (typeof window !== 'undefined' && !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    return (
+      <Link href="/sign-in">
+        <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+          Sign In
+        </Button>
+      </Link>
+    );
+  }
+  
   return <DynamicClerkProfileButton />;
 } 
