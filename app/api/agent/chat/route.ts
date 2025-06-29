@@ -174,11 +174,43 @@ Use these tools when users ask about current conditions, events, news, or market
       // Step 5: Track analytics for this conversation
       try {
         const supabase = await createServerSupabaseClient();
-        await supabase.rpc('track_conversation_session', {
-          p_conversation_id: conversationId,
-          p_agent_id: agentId,
-          p_user_id: userId
-        });
+        
+        // Create or update conversation session
+        const { data: existingSession, error: sessionError } = await supabase
+          .from('conversation_sessions')
+          .select('id, message_count')
+          .eq('conversation_id', conversationId)
+          .eq('agent_id', agentId)
+          .single();
+
+        if (sessionError && sessionError.code !== 'PGRST116') {
+          // Error other than "not found"
+          console.error('Error checking conversation session:', sessionError);
+        } else if (existingSession) {
+          // Update existing session
+          await supabase
+            .from('conversation_sessions')
+            .update({
+              last_activity_at: new Date().toISOString(),
+              message_count: (existingSession.message_count || 0) + 2, // +2 for user message + AI response
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingSession.id);
+        } else {
+          // Create new session (without user_id since it's anonymous)
+          await supabase
+            .from('conversation_sessions')
+            .insert({
+              conversation_id: conversationId,
+              agent_id: agentId,
+              user_id: null, // Anonymous user
+              message_count: 2, // User message + AI response
+              started_at: new Date().toISOString(),
+              last_activity_at: new Date().toISOString(),
+              is_active: true
+            });
+        }
+        
         console.log('📊 Analytics tracked for conversation:', conversationId);
       } catch (analyticsError) {
         console.error('Error tracking analytics (continuing):', analyticsError);

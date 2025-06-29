@@ -19,14 +19,9 @@ interface DashboardAnalytics {
 export function DashboardAnalytics() {
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAnalytics = async (isManualRefresh = false) => {
-    if (isManualRefresh) {
-      setIsRefreshing(true);
-    }
-    
+  const fetchAnalytics = async () => {
     try {
       const response = await fetch('/api/analytics/dashboard');
       if (!response.ok) {
@@ -40,17 +35,14 @@ export function DashboardAnalytics() {
       setError('Failed to load analytics');
     } finally {
       setIsLoading(false);
-      if (isManualRefresh) {
-        setIsRefreshing(false);
-      }
     }
   };
 
   useEffect(() => {
     fetchAnalytics();
     
-    // Refresh analytics every 5 minutes
-    const interval = setInterval(() => fetchAnalytics(), 5 * 60 * 1000);
+    // Refresh analytics every 30 seconds to show updates faster
+    const interval = setInterval(() => fetchAnalytics(), 30 * 1000);
     
     return () => clearInterval(interval);
   }, []);
@@ -84,7 +76,7 @@ export function DashboardAnalytics() {
 
   return (
     <div className="mb-8">
-      {/* Header with refresh button */}
+      {/* Header with title only */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
@@ -92,23 +84,6 @@ export function DashboardAnalytics() {
           </h2>
           <p className="text-gray-600 mt-1">Real-time insights for your agents</p>
         </div>
-        <button
-          onClick={() => fetchAnalytics(true)}
-          disabled={isRefreshing}
-          className="flex items-center gap-2 px-4 py-2 bg-white/70 backdrop-blur-sm border border-white/20 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <svg 
-            className={`w-4 h-4 text-blue-600 ${isRefreshing ? 'animate-spin' : ''}`} 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span className="text-sm font-medium text-gray-700">
-            {isRefreshing ? 'Refreshing...' : 'Refresh'}
-          </span>
-        </button>
       </div>
 
       {/* Mobile-optimized grid: 2 tiles per row with 2 metrics each */}

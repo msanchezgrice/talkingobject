@@ -52,12 +52,12 @@ export async function GET(
       }
       analyticsData = data;
               } catch (error) {
-       // Fallback: Calculate analytics directly from conversation_messages table
+       // Fallback: Calculate analytics directly from conversation_sessions table
        console.log('Using fallback analytics calculation:', error);
       
       const { data: conversationData, error: convError } = await supabase
-        .from('conversation_messages')
-        .select('conversation_id, user_id, created_at')
+        .from('conversation_sessions')
+        .select('conversation_id, user_id, message_count, created_at')
         .eq('agent_id', agentId);
 
       if (convError) {
@@ -77,22 +77,26 @@ export async function GET(
         const uniqueConversations = new Set();
         const uniqueUsers = new Set();
         let messagesLast24h = 0;
+        let totalMessages = 0;
         const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-        (conversationData || []).forEach(msg => {
-          uniqueConversations.add(msg.conversation_id);
-          uniqueUsers.add(msg.user_id);
+        (conversationData || []).forEach(session => {
+          uniqueConversations.add(session.conversation_id);
+          if (session.user_id) {
+            uniqueUsers.add(session.user_id);
+          }
+          totalMessages += session.message_count || 0;
           
-          if (new Date(msg.created_at) > oneDayAgo) {
-            messagesLast24h++;
+          if (new Date(session.created_at) > oneDayAgo) {
+            messagesLast24h += session.message_count || 0;
           }
         });
 
         // Count unique conversations in last 24h
         const recentConversations = new Set();
-        (conversationData || []).forEach(msg => {
-          if (new Date(msg.created_at) > oneDayAgo) {
-            recentConversations.add(msg.conversation_id);
+        (conversationData || []).forEach(session => {
+          if (new Date(session.created_at) > oneDayAgo) {
+            recentConversations.add(session.conversation_id);
           }
         });
 
@@ -105,7 +109,7 @@ export async function GET(
 
         analyticsData = [{
           total_conversations_all_time: uniqueConversations.size,
-          total_messages_all_time: (conversationData || []).length,
+          total_messages_all_time: totalMessages,
           unique_users_all_time: uniqueUsers.size,
           total_tweets_all_time: (tweetData || []).length,
           conversations_last_24h: recentConversations.size,

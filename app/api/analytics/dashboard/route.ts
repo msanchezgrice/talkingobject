@@ -50,25 +50,25 @@ export async function GET() {
       });
     }
 
-    // Get total conversations across all user's agents
+    // Get total conversations across all user's agents using conversation_sessions
     const { data: conversationData, error: conversationError } = await supabase
-      .from('conversation_messages')
-      .select('agent_id, conversation_id, created_at')
+      .from('conversation_sessions')
+      .select('agent_id, conversation_id, message_count, created_at')
       .in('agent_id', agentIds);
 
     if (conversationError) {
       console.error('Error fetching conversation data:', conversationError);
     }
 
-    // Calculate unique conversations
+    // Calculate unique conversations and recent activity
     const uniqueConversations = new Set();
     const recentConversations = new Set();
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    (conversationData || []).forEach(msg => {
-      uniqueConversations.add(msg.conversation_id);
-      if (new Date(msg.created_at) > oneDayAgo) {
-        recentConversations.add(msg.conversation_id);
+    (conversationData || []).forEach(session => {
+      uniqueConversations.add(session.conversation_id);
+      if (new Date(session.created_at) > oneDayAgo) {
+        recentConversations.add(session.conversation_id);
       }
     });
 
@@ -90,9 +90,9 @@ export async function GET() {
 
     // Get top performing agent (by conversation count)
     const agentConversationCounts = new Map();
-    (conversationData || []).forEach(msg => {
-      const count = agentConversationCounts.get(msg.agent_id) || 0;
-      agentConversationCounts.set(msg.agent_id, count + 1);
+    (conversationData || []).forEach(session => {
+      const count = agentConversationCounts.get(session.agent_id) || 0;
+      agentConversationCounts.set(session.agent_id, count + session.message_count);
     });
 
     let topPerformingAgent;

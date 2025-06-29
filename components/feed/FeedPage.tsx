@@ -64,13 +64,14 @@ export default function FeedPage() {
 
   // Auto-refresh every 5 minutes for new tweets (only refresh top, not infinite scroll)
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      if (!isLoading && !isLoadingMore) {
-        fetchTweets(false);
-      }
-    }, 5 * 60 * 1000);
+    // Disable auto-refresh to prevent reload loops
+    // const intervalId = setInterval(() => {
+    //   if (!isLoading && !isLoadingMore) {
+    //     fetchTweets(false);
+    //   }
+    // }, 5 * 60 * 1000);
     
-    return () => clearInterval(intervalId);
+    // return () => clearInterval(intervalId);
   }, [fetchTweets, isLoading, isLoadingMore]);
 
   // Infinite scroll detection
