@@ -16,22 +16,10 @@ export default function Header() {
             
             <nav className="hidden md:flex space-x-6">
               <Link 
-                href="/explore" 
-                className="text-gray-300 hover:text-white transition-colors font-medium"
-              >
-                Explore
-              </Link>
-              <Link 
                 href="/dashboard" 
                 className="text-gray-300 hover:text-white transition-colors font-medium"
               >
                 Dashboard
-              </Link>
-              <Link 
-                href="/feed" 
-                className="text-gray-300 hover:text-white transition-colors font-medium"
-              >
-                Feed
               </Link>
             </nav>
           </div>
@@ -45,22 +33,10 @@ export default function Header() {
         <nav className="md:hidden mt-4 pt-4 border-t border-gray-800/50">
           <div className="flex space-x-6">
             <Link 
-              href="/explore" 
-              className="text-gray-300 hover:text-white transition-colors font-medium"
-            >
-              Explore
-            </Link>
-            <Link 
               href="/dashboard" 
               className="text-gray-300 hover:text-white transition-colors font-medium"
             >
               Dashboard
-            </Link>
-            <Link 
-              href="/feed" 
-              className="text-gray-300 hover:text-white transition-colors font-medium"
-            >
-              Feed
             </Link>
           </div>
         </nav>

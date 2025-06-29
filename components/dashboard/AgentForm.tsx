@@ -13,20 +13,30 @@ const dataSources = [
   { id: 'stocks', name: 'Stock Prices', description: 'Access current stock market data and financial information.' }
 ] as const;
 
+// OpenAI TTS voice options
+const voiceOptions = [
+  { id: 'alloy', name: 'Alloy', description: 'Neutral, balanced voice' },
+  { id: 'echo', name: 'Echo', description: 'Warm, expressive voice' },
+  { id: 'fable', name: 'Fable', description: 'Storytelling, engaging voice' },
+  { id: 'onyx', name: 'Onyx', description: 'Deep, authoritative voice' },
+  { id: 'nova', name: 'Nova', description: 'Bright, energetic voice' },
+  { id: 'shimmer', name: 'Shimmer', description: 'Gentle, soothing voice' }
+] as const;
+
 type DataSource = typeof dataSources[number];
+type VoiceOption = typeof voiceOptions[number];
 
 interface AgentFormData {
   name: string;
   personality: string;
   description: string;
-  interests: string[];
+  interests: string;
   is_active: boolean;
   latitude: number;
   longitude: number;
   image_url: string;
   data_sources: string[];
-  fee_amount: number;
-  fee_token: string;
+  voice: string;
 }
 
 type AgentFormProps = {
@@ -40,14 +50,13 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
     name: agent?.name || '',
     personality: agent?.personality || '',
     description: agent?.description || '',
-    interests: agent?.interests || [],
+    interests: agent?.interests?.join(', ') || '',
     is_active: agent?.is_active ?? true,
     latitude: agent?.latitude || 30.2672, // Default to Austin
     longitude: agent?.longitude || -97.7431, // Default to Austin
     image_url: agent?.image_url || '',
     data_sources: agent?.data_sources || [],
-    fee_amount: agent?.fee_amount || 0,
-    fee_token: agent?.fee_token || 'ETH'
+    voice: agent?.voice || 'alloy'
   });
   
   const [imagePreview, setImagePreview] = useState<string | null>(agent?.image_url || null);
@@ -55,7 +64,7 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev: AgentFormData) => ({ ...prev, [name]: value }));
   };
@@ -100,20 +109,25 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
         throw new Error('You must be signed in to create an agent');
       }
 
+      // Parse interests from comma-separated string
+      const interestsArray = formData.interests
+        .split(',')
+        .map(item => item.trim())
+        .filter(Boolean);
+
       if (agent) {
         // Update existing agent
         const updateData: UpdateClerkAgentData = {
           name: formData.name,
           personality: formData.personality,
           description: formData.description,
-          interests: formData.interests,
+          interests: interestsArray,
           is_active: formData.is_active,
           latitude: formData.latitude,
           longitude: formData.longitude,
           image_url: formData.image_url || '/images/placeholder.jpg',
           data_sources: formData.data_sources,
-          fee_amount: formData.fee_amount,
-          fee_token: formData.fee_token
+          voice: formData.voice
         };
 
         const updatedAgent = await updateClerkAgent(agent.id, updateData);
@@ -130,14 +144,13 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
           slug: generateSlug(formData.name),
           personality: formData.personality,
           description: formData.description,
-          interests: formData.interests,
+          interests: interestsArray,
           is_active: formData.is_active,
           latitude: formData.latitude,
           longitude: formData.longitude,
           image_url: formData.image_url || '/images/placeholder.jpg',
           data_sources: formData.data_sources,
-          fee_amount: formData.fee_amount,
-          fee_token: formData.fee_token,
+          voice: formData.voice,
           clerk_user_id: user.id
         };
 
@@ -160,259 +173,248 @@ export default function AgentForm({ agent, onSubmit }: AgentFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 bg-card p-6 rounded-lg border shadow-lg">
+    <div className="space-y-6 bg-card p-4 sm:p-6 rounded-lg border shadow-lg max-w-2xl mx-auto">
       {error && (
         <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded" role="alert">
           {error}
         </div>
       )}
 
-      <div className="space-y-2">
-        <label htmlFor="name" className="block text-sm font-medium text-foreground">
-          Name
-        </label>
-        <input
-          type="text"
-          name="name"
-          id="name"
-          value={formData.name}
-          onChange={handleChange}
-          className="w-full p-3 border-2 rounded-md bg-background text-foreground focus:border-primary transition-colors"
-          placeholder="E.g., Coffee Shop Guide"
-          required
-        />
-      </div>
-
-      <div>
-        <label htmlFor="personality" className="block text-sm font-medium text-foreground">
-          Personality
-        </label>
-        <textarea
-          name="personality"
-          id="personality"
-          value={formData.personality}
-          onChange={handleChange}
-          className="w-full p-2 border border-border rounded-md bg-background text-foreground h-32"
-          placeholder="Describe your agent's personality, tone, and backstory..."
-          required
-        />
-      </div>
-
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-foreground">
-          Description
-        </label>
-        <textarea
-          name="description"
-          id="description"
-          value={formData.description}
-          onChange={handleChange}
-          className="w-full p-2 border border-border rounded-md bg-background text-foreground h-32"
-          placeholder="Describe what your agent does and how it helps users..."
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-foreground">
-          Location
-        </label>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="latitude" className="block text-xs text-muted-foreground mb-1">
-              Latitude
-            </label>
-            <input
-              type="number"
-              name="latitude"
-              id="latitude"
-              value={formData.latitude.toString()}
-              onChange={handleChange}
-              className="w-full p-2 border border-border rounded-md bg-background text-foreground"
-              placeholder="E.g., 30.2672"
-              step="any"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="longitude" className="block text-xs text-muted-foreground mb-1">
-              Longitude
-            </label>
-            <input
-              type="number"
-              name="longitude"
-              id="longitude"
-              value={formData.longitude.toString()}
-              onChange={handleChange}
-              className="w-full p-2 border border-border rounded-md bg-background text-foreground"
-              placeholder="E.g., -97.7431"
-              step="any"
-              required
-            />
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <label htmlFor="image" className="block text-sm font-medium text-foreground">
-          Agent Image
-        </label>
-        <div className="mt-2 space-y-4">
-          {imagePreview && (
-            <div className="relative h-40 w-40 mb-4">
-              <Image
-                src={imagePreview}
-                alt="Agent preview"
-                fill
-                style={{ objectFit: 'cover' }}
-                className="rounded-lg"
-              />
-            </div>
-          )}
-          
-          <div className="space-y-2">
-            <input
-              type="file"
-              ref={fileInputRef}
-              id="image"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-            />
-            <label
-              htmlFor="image"
-              className="block w-full p-2 border border-border rounded-md bg-background text-foreground text-center cursor-pointer hover:bg-muted"
-            >
-              Upload Image
-            </label>
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-card text-muted-foreground">Or</span>
-              </div>
-            </div>
-            
-            <input
-              type="text"
-              name="image_url"
-              id="image_url"
-              value={formData.image_url}
-              onChange={handleImageUrlChange}
-              className="w-full p-2 border border-border rounded-md bg-background text-foreground"
-              placeholder="Enter image URL"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-foreground">
-          Data Sources
-        </label>
-        <div className="space-y-2">
-          {dataSources.map((source: DataSource) => (
-            <label key={source.id} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                value={source.id}
-                checked={formData.data_sources.includes(source.id)}
-                onChange={(e) => {
-                  const { value, checked } = e.target;
-                  setFormData((prev) => ({
-                    ...prev,
-                    data_sources: checked
-                      ? [...prev.data_sources, value]
-                      : prev.data_sources.filter((id) => id !== value),
-                  }));
-                }}
-                className="rounded border-border text-primary focus:ring-primary"
-              />
-              <span className="text-foreground">{source.name}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <label htmlFor="interests" className="block text-sm font-medium text-foreground">
-          Interests (comma-separated)
-        </label>
-        <input
-          type="text"
-          name="interests"
-          id="interests"
-          value={formData.interests.join(', ')}
-          onChange={(e) => {
-            const interestsArray = e.target.value.split(',').map(item => item.trim()).filter(Boolean);
-            setFormData(prev => ({ ...prev, interests: interestsArray }));
-          }}
-          className="mt-1 block w-full p-2 border border-border rounded-md bg-background text-foreground"
-          placeholder="Enter interests separated by commas"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Agent Image - Moved to top */}
         <div>
-          <label htmlFor="fee_amount" className="block text-sm font-medium text-foreground">
-            Fee Amount
+          <label htmlFor="image" className="block text-sm font-medium text-foreground mb-3">
+            Agent Image
+          </label>
+          <div className="flex flex-col items-center space-y-4">
+            {imagePreview && (
+              <div className="relative h-32 w-32 sm:h-40 sm:w-40">
+                <Image
+                  src={imagePreview}
+                  alt="Agent preview"
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  className="rounded-lg border-2 border-gray-200"
+                />
+              </div>
+            )}
+            
+            <div className="w-full space-y-3">
+              <input
+                type="file"
+                ref={fileInputRef}
+                id="image"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+              <label
+                htmlFor="image"
+                className="block w-full p-3 border border-border rounded-md bg-background text-foreground text-center cursor-pointer hover:bg-muted transition-colors"
+              >
+                📷 Upload Image
+              </label>
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-card text-muted-foreground">Or</span>
+                </div>
+              </div>
+              
+              <input
+                type="text"
+                name="image_url"
+                id="image_url"
+                value={formData.image_url}
+                onChange={handleImageUrlChange}
+                className="w-full p-3 border border-border rounded-md bg-background text-foreground"
+                placeholder="Enter image URL"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="name" className="block text-sm font-medium text-foreground">
+            Name
           </label>
           <input
-            type="number"
-            name="fee_amount"
-            id="fee_amount"
-            value={formData.fee_amount}
-            onChange={(e) => setFormData(prev => ({ ...prev, fee_amount: parseFloat(e.target.value) || 0 }))}
-            className="w-full p-2 border border-border rounded-md bg-background text-foreground"
-            placeholder="0"
-            min="0"
-            step="0.01"
+            type="text"
+            name="name"
+            id="name"
+            value={formData.name}
+            onChange={handleChange}
+            className="w-full p-3 border-2 rounded-md bg-background text-foreground focus:border-primary transition-colors"
+            placeholder="E.g., Coffee Shop Guide"
+            required
           />
         </div>
 
         <div>
-          <label htmlFor="fee_token" className="block text-sm font-medium text-foreground">
-            Fee Token
+          <label htmlFor="personality" className="block text-sm font-medium text-foreground">
+            Personality
+          </label>
+          <textarea
+            name="personality"
+            id="personality"
+            value={formData.personality}
+            onChange={handleChange}
+            className="w-full p-3 border border-border rounded-md bg-background text-foreground h-24 sm:h-32 resize-none"
+            placeholder="Describe your agent's personality, tone, and backstory..."
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="description" className="block text-sm font-medium text-foreground">
+            Description
+          </label>
+          <textarea
+            name="description"
+            id="description"
+            value={formData.description}
+            onChange={handleChange}
+            className="w-full p-3 border border-border rounded-md bg-background text-foreground h-24 sm:h-32 resize-none"
+            placeholder="Describe what your agent does and how it helps users..."
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="interests" className="block text-sm font-medium text-foreground">
+            Interests
+          </label>
+          <input
+            type="text"
+            name="interests"
+            id="interests"
+            value={formData.interests}
+            onChange={handleChange}
+            className="w-full p-3 border border-border rounded-md bg-background text-foreground"
+            placeholder="coffee, local culture, art, music (separate with commas)"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Enter interests separated by commas
+          </p>
+        </div>
+
+        <div>
+          <label htmlFor="voice" className="block text-sm font-medium text-foreground">
+            Voice (Text-to-Speech)
           </label>
           <select
-            name="fee_token"
-            id="fee_token"
-            value={formData.fee_token}
-            onChange={(e) => setFormData(prev => ({ ...prev, fee_token: e.target.value }))}
-            className="w-full p-2 border border-border rounded-md bg-background text-foreground"
+            name="voice"
+            id="voice"
+            value={formData.voice}
+            onChange={handleChange}
+            className="w-full p-3 border border-border rounded-md bg-background text-foreground"
           >
-            <option value="ETH">ETH</option>
-            <option value="USD">USD</option>
-            <option value="BTC">BTC</option>
+            {voiceOptions.map((voice: VoiceOption) => (
+              <option key={voice.id} value={voice.id}>
+                {voice.name} - {voice.description}
+              </option>
+            ))}
           </select>
         </div>
-      </div>
 
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          name="is_active"
-          id="is_active"
-          checked={formData.is_active}
-          onChange={(e) => setFormData((prev) => ({ ...prev, is_active: e.target.checked }))}
-          className="rounded border-border text-primary focus:ring-primary"
-        />
-        <label htmlFor="is_active" className="ml-2 block text-sm text-foreground">
-          Active
-        </label>
-      </div>
+        <div>
+          <label className="block text-sm font-medium text-foreground">
+            Location
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="latitude" className="block text-xs text-muted-foreground mb-1">
+                Latitude
+              </label>
+              <input
+                type="number"
+                name="latitude"
+                id="latitude"
+                value={formData.latitude.toString()}
+                onChange={handleChange}
+                className="w-full p-3 border border-border rounded-md bg-background text-foreground"
+                placeholder="E.g., 30.2672"
+                step="any"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="longitude" className="block text-xs text-muted-foreground mb-1">
+                Longitude
+              </label>
+              <input
+                type="number"
+                name="longitude"
+                id="longitude"
+                value={formData.longitude.toString()}
+                onChange={handleChange}
+                className="w-full p-3 border border-border rounded-md bg-background text-foreground"
+                placeholder="E.g., -97.7431"
+                step="any"
+                required
+              />
+            </div>
+          </div>
+        </div>
 
-      <div className="flex justify-end space-x-4">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? 'Saving...' : agent ? 'Update Agent' : 'Create Agent'}
-        </button>
-      </div>
-    </form>
+        <div>
+          <label className="block text-sm font-medium text-foreground">
+            Data Sources
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+            {dataSources.map((source: DataSource) => (
+              <label key={source.id} className="flex items-start space-x-3 p-3 border border-border rounded-md hover:bg-muted/50 transition-colors">
+                <input
+                  type="checkbox"
+                  value={source.id}
+                  checked={formData.data_sources.includes(source.id)}
+                  onChange={(e) => {
+                    const { value, checked } = e.target;
+                    setFormData((prev) => ({
+                      ...prev,
+                      data_sources: checked
+                        ? [...prev.data_sources, value]
+                        : prev.data_sources.filter((id) => id !== value),
+                    }));
+                  }}
+                  className="rounded border-border text-primary focus:ring-primary mt-1"
+                />
+                <div>
+                  <span className="text-foreground font-medium">{source.name}</span>
+                  <p className="text-xs text-muted-foreground">{source.description}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-3 p-3 border border-border rounded-md">
+          <input
+            type="checkbox"
+            name="is_active"
+            id="is_active"
+            checked={formData.is_active}
+            onChange={(e) => setFormData((prev) => ({ ...prev, is_active: e.target.checked }))}
+            className="rounded border-border text-primary focus:ring-primary"
+          />
+          <label htmlFor="is_active" className="block text-sm text-foreground font-medium">
+            Active (Agent can receive messages)
+          </label>
+        </div>
+
+        <div className="flex justify-end space-x-4 pt-4">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          >
+            {isSubmitting ? 'Saving...' : agent ? 'Update Agent' : 'Create Agent'}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 } 

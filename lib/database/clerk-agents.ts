@@ -18,6 +18,7 @@ export interface ClerkDatabaseAgent {
   data_sources: string[];
   fee_amount: number;
   fee_token: string;
+  voice: string;
 }
 
 // Create Agent Data Type (for inserts)
@@ -35,6 +36,7 @@ export interface CreateClerkAgentData {
   fee_amount?: number;
   fee_token?: string;
   clerk_user_id?: string;
+  voice?: string;
 }
 
 // Update Agent Data Type (for updates)
@@ -50,6 +52,7 @@ export interface UpdateClerkAgentData {
   data_sources?: string[];
   fee_amount?: number;
   fee_token?: string;
+  voice?: string;
 }
 
 /**
@@ -122,6 +125,7 @@ export async function createClerkAgent(agentData: CreateClerkAgentData): Promise
         fee_amount: agentData.fee_amount || 0,
         fee_token: agentData.fee_token || 'ETH',
         clerk_user_id: agentData.clerk_user_id || null,
+        voice: agentData.voice || '',
       })
       .select()
       .single();
