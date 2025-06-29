@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   
   // Try database first, then fall back to placeholder agents
   console.log('🔍 [METADATA] Attempting database lookup...');
-  let agent = await serverAgentQueries.getClerkAgentBySlug(resolvedParams.slug);
+  const agent = await serverAgentQueries.getClerkAgentBySlug(resolvedParams.slug);
   
   if (!agent) {
     console.log('🔍 [METADATA] No database agent found, trying placeholder...');
@@ -59,7 +59,7 @@ export default async function AgentPage({ params }: PageProps) {
   
   // Try database first, then fall back to placeholder agents
   console.log('🔍 [PAGE] Attempting database lookup...');
-  let agent = await serverAgentQueries.getClerkAgentBySlug(resolvedParams.slug);
+  const agent = await serverAgentQueries.getClerkAgentBySlug(resolvedParams.slug);
   
   if (!agent) {
     console.log('🔍 [PAGE] No database agent found, trying placeholder...');
