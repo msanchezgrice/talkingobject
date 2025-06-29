@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useUser } from '@clerk/nextjs';
 import { AgentCard } from "@/components/dashboard/AgentCard";
+import { DashboardAnalytics } from "@/components/dashboard/DashboardAnalytics";
 import { getClerkUserAgents, ClerkDatabaseAgent } from "@/lib/database/clerk-agents";
 import nextDynamic from 'next/dynamic';
 
@@ -132,6 +133,9 @@ function DashboardPageInner() {
             </div>
           </div>
         )}
+
+        {/* Analytics Dashboard */}
+        <DashboardAnalytics />
 
         {agents.length === 0 ? (
           <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg p-8 mb-8 border border-white/20 text-center">

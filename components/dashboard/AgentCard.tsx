@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { DatabaseAgent, deleteAgent } from '@/lib/database/agents';
@@ -14,12 +14,39 @@ interface AgentCardProps {
   onUpdate?: () => void;
 }
 
+interface AgentAnalytics {
+  totalConversations: number;
+  totalMessages: number;
+  conversationsLast24h: number;
+  totalTweets: number;
+}
+
 export function AgentCard({ agent, onUpdate }: AgentCardProps) {
   const router = useRouter();
   const { user } = useUser();
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [analytics, setAnalytics] = useState<AgentAnalytics | null>(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const response = await fetch(`/api/analytics/agent/${agent.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setAnalytics(data);
+        }
+      } catch (error) {
+        console.error('Error fetching agent analytics:', error);
+      } finally {
+        setLoadingAnalytics(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, [agent.id]);
 
   const handleEditClick = () => {
     router.push(`/agent/${agent.slug}/edit`);
@@ -33,6 +60,10 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
       targetUrl: `/agent/${agent.slug}`
     });
     router.push(`/agent/${agent.slug}`);
+  };
+
+  const handleConversationsClick = () => {
+    router.push(`/dashboard/conversations/${agent.id}`);
   };
 
   const handleToggleActive = async () => {
@@ -121,8 +152,6 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
       .substring(0, 2);
   };
 
-
-
   return (
     <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 hover:shadow-xl hover:bg-white/80 transition-all duration-300 flex flex-col h-full">
       <div className="p-6">
@@ -196,6 +225,27 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
               <span>Created:</span>
               <span className="font-medium">{new Date(agent.created_at).toLocaleDateString()}</span>
             </div>
+            {analytics && !loadingAnalytics && (
+              <>
+                <div className="flex justify-between">
+                  <span>Total Chats:</span>
+                  <span className="font-medium">{analytics.totalConversations}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>24h Chats:</span>
+                  <span className="font-medium">{analytics.conversationsLast24h}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tweets:</span>
+                  <span className="font-medium">{analytics.totalTweets}</span>
+                </div>
+              </>
+            )}
+            {loadingAnalytics && (
+              <div className="flex justify-center py-2">
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+              </div>
+            )}
             {agent.fee_amount > 0 && (
               <div className="flex justify-between">
                 <span>Fee:</span>
@@ -203,6 +253,31 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
               </div>
             )}
           </div>
+
+          {/* Analytics Summary */}
+          {analytics && !loadingAnalytics && (
+            <div className="mt-4 p-3 bg-gradient-to-r from-blue-50/50 to-purple-50/50 rounded-xl border border-blue-200/30">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Performance</h4>
+                <button
+                  onClick={handleConversationsClick}
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                >
+                  View History →
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="text-center">
+                  <div className="font-bold text-blue-600">{analytics.totalMessages}</div>
+                  <div className="text-gray-500">Messages</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-purple-600">{analytics.conversationsLast24h}</div>
+                  <div className="text-gray-500">Recent</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       

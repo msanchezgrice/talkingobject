@@ -6,6 +6,7 @@ import {
   storeConversationMessage 
 } from '@/lib/memory';
 import { generateLocationContext } from '@/lib/placeholder-agents';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // Using AIMessage interface from lib/aiProvider.ts
 
@@ -169,6 +170,19 @@ Use these tools when users ask about current conditions, events, news, or market
         responseText,
         false // AI responses are typically not memory-worthy themselves
       );
+
+      // Step 5: Track analytics for this conversation
+      try {
+        const supabase = await createServerSupabaseClient();
+        await supabase.rpc('track_conversation_session', {
+          p_conversation_id: conversationId,
+          p_agent_id: agentId,
+          p_user_id: userId
+        });
+        console.log('📊 Analytics tracked for conversation:', conversationId);
+      } catch (analyticsError) {
+        console.error('Error tracking analytics (continuing):', analyticsError);
+      }
     } catch (storageError) {
       console.error('Error storing AI response (continuing):', storageError);
     }
