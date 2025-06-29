@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { serverAgentQueries } from '@/lib/database/server-agents';
+import { auth } from '@clerk/nextjs/server';
 
 // Update agent
 export async function PATCH(
@@ -9,27 +9,46 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createServerSupabaseClient();
+    const { userId } = await auth();
     
-    // Check authentication
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
-    
-    if (authError || !session?.user) {
+    if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
+    const supabase = await createServerSupabaseClient();
     const body = await request.json();
 
-    // Update agent (only if user owns it)
-    const updatedAgent = await serverAgentQueries.updateAgent(id, body);
+    // Verify the user owns this agent
+    const { data: existingAgent, error: fetchError } = await supabase
+      .from('agents')
+      .select('clerk_user_id')
+      .eq('id', id)
+      .single();
 
-    if (!updatedAgent) {
+    if (fetchError || !existingAgent || existingAgent.clerk_user_id !== userId) {
       return NextResponse.json(
-        { error: 'Failed to update agent or agent not found' },
+        { error: 'Agent not found or unauthorized' },
         { status: 404 }
+      );
+    }
+
+    // Update agent
+    const { data: updatedAgent, error: updateError } = await supabase
+      .from('agents')
+      .update(body)
+      .eq('id', id)
+      .eq('clerk_user_id', userId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Agent update error:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update agent' },
+        { status: 500 }
       );
     }
 
@@ -51,22 +70,26 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createServerSupabaseClient();
+    const { userId } = await auth();
     
-    // Check authentication
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
-    
-    if (authError || !session?.user) {
+    if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    // Delete agent (only if user owns it)
-    const success = await serverAgentQueries.deleteAgent(id, session.user.id);
+    const supabase = await createServerSupabaseClient();
 
-    if (!success) {
+    // Delete agent (only if user owns it)
+    const { error: deleteError } = await supabase
+      .from('agents')
+      .delete()
+      .eq('id', id)
+      .eq('clerk_user_id', userId);
+
+    if (deleteError) {
+      console.error('Agent deletion error:', deleteError);
       return NextResponse.json(
         { error: 'Failed to delete agent or agent not found' },
         { status: 404 }

@@ -62,17 +62,18 @@ export async function GET() {
 
     // Calculate unique conversations
     const uniqueConversations = new Set();
-    let chatsLast24h = 0;
+    const recentConversations = new Set();
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     (conversationData || []).forEach(msg => {
       uniqueConversations.add(msg.conversation_id);
       if (new Date(msg.created_at) > oneDayAgo) {
-        chatsLast24h++;
+        recentConversations.add(msg.conversation_id);
       }
     });
 
     const totalChats = uniqueConversations.size;
+    const chatsLast24h = recentConversations.size;
 
     // Get total tweets across all user's agents
     const { data: tweetData, error: tweetError } = await supabase

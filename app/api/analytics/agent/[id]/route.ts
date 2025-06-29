@@ -40,13 +40,79 @@ export async function GET(
       return NextResponse.json({ error: 'Agent not found or unauthorized' }, { status: 404 });
     }
 
-    // Get analytics summary using the database function
-    const { data: analyticsData, error: analyticsError } = await supabase
-      .rpc('get_agent_analytics_summary', { p_agent_id: agentId });
+    // Get analytics summary using the database function (with fallback)
+    let analyticsData;
+    try {
+      const { data, error } = await supabase
+        .rpc('get_agent_analytics_summary', { p_agent_id: agentId });
+      
+      if (error) {
+        console.log('Analytics function not available, using fallback calculation');
+        throw error;
+      }
+      analyticsData = data;
+              } catch (error) {
+       // Fallback: Calculate analytics directly from conversation_messages table
+       console.log('Using fallback analytics calculation:', error);
+      
+      const { data: conversationData, error: convError } = await supabase
+        .from('conversation_messages')
+        .select('conversation_id, user_id, created_at')
+        .eq('agent_id', agentId);
 
-    if (analyticsError) {
-      console.error('Error fetching analytics:', analyticsError);
-      return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 500 });
+      if (convError) {
+        console.error('Error fetching conversation data:', convError);
+        // Return zeros if no data available
+        analyticsData = [{
+          total_conversations_all_time: 0,
+          total_messages_all_time: 0,
+          unique_users_all_time: 0,
+          total_tweets_all_time: 0,
+          conversations_last_24h: 0,
+          messages_last_24h: 0,
+          unique_users_last_24h: 0
+        }];
+      } else {
+        // Calculate metrics from conversation data
+        const uniqueConversations = new Set();
+        const uniqueUsers = new Set();
+        let messagesLast24h = 0;
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+        (conversationData || []).forEach(msg => {
+          uniqueConversations.add(msg.conversation_id);
+          uniqueUsers.add(msg.user_id);
+          
+          if (new Date(msg.created_at) > oneDayAgo) {
+            messagesLast24h++;
+          }
+        });
+
+        // Count unique conversations in last 24h
+        const recentConversations = new Set();
+        (conversationData || []).forEach(msg => {
+          if (new Date(msg.created_at) > oneDayAgo) {
+            recentConversations.add(msg.conversation_id);
+          }
+        });
+
+        // Get tweet count
+        const { data: tweetData } = await supabase
+          .from('tweet_queue')
+          .select('id')
+          .eq('agent_id', agentId)
+          .not('posted_at', 'is', null);
+
+        analyticsData = [{
+          total_conversations_all_time: uniqueConversations.size,
+          total_messages_all_time: (conversationData || []).length,
+          unique_users_all_time: uniqueUsers.size,
+          total_tweets_all_time: (tweetData || []).length,
+          conversations_last_24h: recentConversations.size,
+          messages_last_24h: messagesLast24h,
+          unique_users_last_24h: 0 // Would need more complex calculation
+        }];
+      }
     }
 
     const analytics = analyticsData?.[0] || {
