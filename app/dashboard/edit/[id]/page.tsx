@@ -3,11 +3,21 @@
 import { useEffect, useState } from 'react';
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import AgentForm from "@/components/dashboard/AgentForm";
+import nextDynamic from 'next/dynamic';
 import { getClerkAgentById, ClerkDatabaseAgent } from '@/lib/database/clerk-agents';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
+
+// Dynamically import AgentForm to avoid SSR issues
+const AgentForm = nextDynamic(() => import('@/components/dashboard/AgentForm'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex justify-center items-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+  ),
+});
 
 export default function EditAgentPage() {
   const params = useParams();
