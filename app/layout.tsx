@@ -16,7 +16,16 @@ export const metadata: Metadata = {
   authors: [{ name: "Talking Objects Team" }],
   icons: {
     icon: [{ url: "/chat-bubble.svg" }],
-    apple: [{ url: "/chat-bubble.svg" }],
+    apple: [
+      { url: "/chat-bubble.svg" },
+      { url: "/chat-bubble.svg", sizes: "180x180", type: "image/svg+xml" }
+    ],
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Talking Objects",
   },
   openGraph: {
     type: "website",
@@ -45,6 +54,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#000000',
 };
 
 export default function RootLayout({
