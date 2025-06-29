@@ -16,7 +16,7 @@ export interface AgentAnalytics {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -25,7 +25,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const agentId = params.id;
+    const { id: agentId } = await params;
     const supabase = await createServerSupabaseClient();
 
     // Verify the user owns this agent
