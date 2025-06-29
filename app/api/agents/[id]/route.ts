@@ -9,7 +9,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     // Check authentication
     const { data: { session }, error: authError } = await supabase.auth.getSession();
@@ -51,7 +51,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     // Check authentication
     const { data: { session }, error: authError } = await supabase.auth.getSession();
@@ -91,7 +91,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     // Get agent by ID (public endpoint)
     const agent = await supabase
