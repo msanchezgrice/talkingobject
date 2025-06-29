@@ -26,6 +26,12 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
   };
 
   const handleViewClick = () => {
+    console.log('🔍 [AGENT-CARD] View button clicked for agent:', {
+      name: agent.name,
+      slug: agent.slug,
+      id: agent.id,
+      targetUrl: `/agent/${agent.slug}`
+    });
     router.push(`/agent/${agent.slug}`);
   };
 

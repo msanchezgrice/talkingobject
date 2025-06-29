@@ -9,7 +9,7 @@ import {
 // Create a new user profile
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     // Check authentication
     const { data: { session }, error: authError } = await supabase.auth.getSession();
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
 // Update user profile
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     // Check authentication
     const { data: { session }, error: authError } = await supabase.auth.getSession();
@@ -149,7 +149,7 @@ export async function PUT(request: NextRequest) {
 // Get user profile
 export async function GET() {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     // Check authentication
     const { data: { session }, error: authError } = await supabase.auth.getSession();
