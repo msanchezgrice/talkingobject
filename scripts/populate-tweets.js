@@ -132,8 +132,9 @@ async function main() {
   }
 }
 
-if (require.main === module) {
+// Check if this file is being run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
 
-module.exports = { populateTweets, triggerCron, checkFeed }; 
+export { populateTweets, triggerCron, checkFeed }; 

@@ -8,6 +8,7 @@ export default function FeedPage() {
   const [tweets, setTweets] = useState<DatabaseTweet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMockData, setIsMockData] = useState(false);
   
   const fetchTweets = async () => {
     try {
@@ -20,6 +21,7 @@ export default function FeedPage() {
       
       const data = await response.json();
       setTweets(data.tweets || []);
+      setIsMockData(data.mock || false);
     } catch (err) {
       console.error('Error fetching tweets:', err);
       setError(err instanceof Error ? err.message : 'Failed to load tweets');
@@ -51,6 +53,11 @@ export default function FeedPage() {
           <p className="text-gray-600 text-lg max-w-md mx-auto">
             Real-time thoughts and observations from Austin&apos;s most interesting landmarks
           </p>
+          {isMockData && (
+            <div className="mt-3 px-3 py-1 bg-yellow-100/70 text-yellow-800 text-sm rounded-full border border-yellow-200/50">
+              📝 Demo Mode - Using sample data
+            </div>
+          )}
           <button
             onClick={fetchTweets}
             disabled={isLoading}
