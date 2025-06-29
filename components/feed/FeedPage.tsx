@@ -1,43 +1,98 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { DatabaseTweet } from '../../app/api/tweets/route';
 import TweetCard from './TweetCard';
 
 export default function FeedPage() {
   const [tweets, setTweets] = useState<DatabaseTweet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isMockData, setIsMockData] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
   
-  const fetchTweets = async () => {
+  const fetchTweets = useCallback(async (loadMore = false) => {
     try {
       setError(null);
-      const response = await fetch('/api/tweets?limit=20');
+      if (loadMore) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+        setOffset(0);
+      }
+      
+      const currentOffset = loadMore ? offset : 0;
+      const response = await fetch(`/api/tweets?limit=20&offset=${currentOffset}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch tweets');
       }
       
       const data = await response.json();
-      setTweets(data.tweets || []);
+      const newTweets = data.tweets || [];
+      
+      if (loadMore) {
+        setTweets(prev => [...prev, ...newTweets]);
+      } else {
+        setTweets(newTweets);
+      }
+      
       setIsMockData(data.mock || false);
+      setHasMore(data.hasMore || false);
+      setOffset(currentOffset + newTweets.length);
+      
     } catch (err) {
       console.error('Error fetching tweets:', err);
       setError(err instanceof Error ? err.message : 'Failed to load tweets');
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
-  };
+  }, [offset]);
+
+  const loadMoreTweets = useCallback(() => {
+    if (!isLoadingMore && hasMore) {
+      fetchTweets(true);
+    }
+  }, [fetchTweets, isLoadingMore, hasMore]);
   
   useEffect(() => {
     fetchTweets();
-    
-    // Refresh tweets every 5 minutes
-    const intervalId = setInterval(fetchTweets, 5 * 60 * 1000);
+  }, []);
+
+  // Auto-refresh every 5 minutes for new tweets (only refresh top, not infinite scroll)
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (!isLoading && !isLoadingMore) {
+        fetchTweets(false);
+      }
+    }, 5 * 60 * 1000);
     
     return () => clearInterval(intervalId);
-  }, []);
+  }, [fetchTweets, isLoading, isLoadingMore]);
+
+  // Infinite scroll detection
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop
+        >= document.documentElement.offsetHeight - 1000 // Load more when 1000px from bottom
+      ) {
+        loadMoreTweets();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loadMoreTweets]);
+
+  const refreshTweets = () => {
+    if (!isLoading && !isLoadingMore) {
+      fetchTweets(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
@@ -59,8 +114,8 @@ export default function FeedPage() {
             </div>
           )}
           <button
-            onClick={fetchTweets}
-            disabled={isLoading}
+            onClick={refreshTweets}
+            disabled={isLoading || isLoadingMore}
             className="mt-4 px-4 py-2 bg-blue-100/70 hover:bg-blue-200/70 text-blue-700 text-sm font-medium rounded-full transition-colors duration-200 border border-blue-200/50 disabled:opacity-50"
           >
             {isLoading ? 'Refreshing...' : 'Refresh'}
@@ -83,7 +138,7 @@ export default function FeedPage() {
               <p className="text-xl font-semibold text-red-800 mb-2">Error loading feed</p>
               <p className="text-red-600 mb-4">{error}</p>
               <button
-                onClick={fetchTweets}
+                onClick={refreshTweets}
                 className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 text-sm font-medium rounded-full transition-colors duration-200"
               >
                 Try Again
@@ -101,14 +156,51 @@ export default function FeedPage() {
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
-            {tweets.map(tweet => (
-              <TweetCard 
-                key={tweet.id}
-                tweet={tweet}
-              />
-            ))}
-          </div>
+          <>
+            <div className="space-y-6">
+              {tweets.map(tweet => (
+                <TweetCard 
+                  key={tweet.id}
+                  tweet={tweet}
+                />
+              ))}
+            </div>
+            
+            {/* Load More / Loading Indicator */}
+            {isLoadingMore && (
+              <div className="flex justify-center py-8">
+                <div className="relative">
+                  <div className="w-8 h-8 rounded-full border-2 border-blue-200 border-t-blue-600 animate-spin"></div>
+                  <div className="absolute inset-0 w-8 h-8 rounded-full border-2 border-transparent border-r-purple-600 animate-spin animate-reverse"></div>
+                </div>
+              </div>
+            )}
+            
+            {/* End of feed indicator */}
+            {!hasMore && tweets.length > 0 && (
+              <div className="text-center py-8">
+                <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
+                    <span className="text-xl text-green-600">✨</span>
+                  </div>
+                  <p className="text-gray-700 font-medium">You&apos;ve reached the beginning!</p>
+                  <p className="text-gray-500 text-sm mt-1">That&apos;s all the tweets from our Austin agents.</p>
+                </div>
+              </div>
+            )}
+            
+            {/* Load More Button (fallback for users who prefer clicking) */}
+            {hasMore && !isLoadingMore && tweets.length > 0 && (
+              <div className="text-center py-6">
+                <button
+                  onClick={loadMoreTweets}
+                  className="px-6 py-3 bg-blue-100/70 hover:bg-blue-200/70 text-blue-700 font-medium rounded-full transition-colors duration-200 border border-blue-200/50"
+                >
+                  Load More Tweets
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

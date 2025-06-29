@@ -18,11 +18,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = parseInt(searchParams.get('offset') || '0');
+    const agentSlug = searchParams.get('agent'); // Filter by specific agent
 
     const supabase = await createServerSupabaseClient();
 
-    // Get posted tweets with agent information
-    const { data: tweets, error } = await supabase
+    // Build the query
+    let query = supabase
       .from('tweet_queue')
       .select(`
         id,
@@ -37,7 +38,15 @@ export async function GET(request: NextRequest) {
         )
       `)
       .not('posted_at', 'is', null)
-      .not('twitter_id', 'is', null)
+      .not('twitter_id', 'is', null);
+
+    // Add agent filter if specified
+    if (agentSlug) {
+      query = query.eq('agents.slug', agentSlug);
+    }
+
+    // Apply ordering and pagination
+    const { data: tweets, error } = await query
       .order('posted_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -98,11 +107,17 @@ export async function GET(request: NextRequest) {
         }
       ];
 
+      // Filter mock data by agent if specified
+      let filteredMockTweets = mockTweets;
+      if (agentSlug) {
+        filteredMockTweets = mockTweets.filter(tweet => tweet.agent_slug === agentSlug);
+      }
+
       console.log('Using mock tweets as fallback');
       return NextResponse.json({
-        tweets: mockTweets.slice(offset, offset + limit),
-        count: mockTweets.length,
-        hasMore: (offset + limit) < mockTweets.length,
+        tweets: filteredMockTweets.slice(offset, offset + limit),
+        count: filteredMockTweets.length,
+        hasMore: (offset + limit) < filteredMockTweets.length,
         mock: true
       });
     }
