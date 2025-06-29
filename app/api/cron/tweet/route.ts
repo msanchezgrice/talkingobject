@@ -9,7 +9,7 @@ import {
   cleanupOldTweets 
 } from '@/lib/tweet-queue';
 import { postTweet, TweetData } from '@/lib/twitter';
-import { getAgentById } from '@/lib/placeholder-agents';
+import { serverAgentQueries } from '@/lib/database/server-agents';
 
 // This API route is called by Vercel Cron every 15 minutes
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -82,7 +82,8 @@ export async function GET(_request: NextRequest) {
         }
         
         // Get agent info for the tweet
-        const agent = getAgentById(tweet.agent_id);
+        const agent = await serverAgentQueries.getClerkAgentBySlug(tweet.agent_id) || 
+                     await serverAgentQueries.getAgentBySlug(tweet.agent_id);
         if (!agent) {
           console.error(`❌ Agent not found: ${tweet.agent_id}`);
           await markTweetFailed(tweet.id, 'Agent not found');
@@ -98,7 +99,7 @@ export async function GET(_request: NextRequest) {
         // Prepare tweet data
         const tweetData: TweetData = {
           text: tweet.payload,
-          agentId: agent.id || agent.slug,
+          agentId: agent.id,
           agentName: agent.name
         };
         

@@ -1,42 +1,38 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getAllTweets, Tweet, generateInitialTweets } from '../../lib/models/tweet';
-import { PlaceholderAgent, placeholderAgents } from '../../lib/placeholder-agents';
-import { generateTweetsForAllAgents, simulateTweetSchedule } from '../../lib/services/tweet-service';
+import { DatabaseTweet } from '../../app/api/tweets/route';
 import TweetCard from './TweetCard';
 
 export default function FeedPage() {
-  const [tweets, setTweets] = useState<Tweet[]>([]);
-  const [agents, setAgents] = useState<PlaceholderAgent[]>([]);
+  const [tweets, setTweets] = useState<DatabaseTweet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // Get agent by ID
-  const getAgentById = (agentId: string): PlaceholderAgent | undefined => {
-    return agents.find(agent => agent.id === agentId);
+  const fetchTweets = async () => {
+    try {
+      setError(null);
+      const response = await fetch('/api/tweets?limit=20');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch tweets');
+      }
+      
+      const data = await response.json();
+      setTweets(data.tweets || []);
+    } catch (err) {
+      console.error('Error fetching tweets:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load tweets');
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   useEffect(() => {
-    // Initialize agents
-    setAgents(placeholderAgents);
+    fetchTweets();
     
-    // Generate initial tweets if none exist
-    if (getAllTweets().length === 0) {
-      generateInitialTweets(placeholderAgents);
-    }
-    
-    // Set up tweet schedule
-    simulateTweetSchedule(placeholderAgents);
-    
-    // Load tweets
-    setTweets(getAllTweets());
-    setIsLoading(false);
-    
-    // Set up interval to check for new tweets
-    const intervalId = setInterval(() => {
-      generateTweetsForAllAgents(placeholderAgents);
-      setTweets(getAllTweets());
-    }, 60000); // Check every minute
+    // Refresh tweets every 5 minutes
+    const intervalId = setInterval(fetchTweets, 5 * 60 * 1000);
     
     return () => clearInterval(intervalId);
   }, []);
@@ -55,6 +51,13 @@ export default function FeedPage() {
           <p className="text-gray-600 text-lg max-w-md mx-auto">
             Real-time thoughts and observations from Austin&apos;s most interesting landmarks
           </p>
+          <button
+            onClick={fetchTweets}
+            disabled={isLoading}
+            className="mt-4 px-4 py-2 bg-blue-100/70 hover:bg-blue-200/70 text-blue-700 text-sm font-medium rounded-full transition-colors duration-200 border border-blue-200/50 disabled:opacity-50"
+          >
+            {isLoading ? 'Refreshing...' : 'Refresh'}
+          </button>
         </div>
         
         {isLoading ? (
@@ -64,6 +67,22 @@ export default function FeedPage() {
               <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-r-purple-600 animate-spin animate-reverse"></div>
             </div>
           </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <div className="bg-red-50/70 backdrop-blur-sm rounded-2xl shadow-lg border border-red-200/20 p-8">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center">
+                <span className="text-2xl text-red-500">⚠️</span>
+              </div>
+              <p className="text-xl font-semibold text-red-800 mb-2">Error loading feed</p>
+              <p className="text-red-600 mb-4">{error}</p>
+              <button
+                onClick={fetchTweets}
+                className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 text-sm font-medium rounded-full transition-colors duration-200"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
         ) : tweets.length === 0 ? (
           <div className="text-center py-12">
             <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8">
@@ -71,21 +90,17 @@ export default function FeedPage() {
                 <span className="text-2xl text-gray-400">💭</span>
               </div>
               <p className="text-xl font-semibold text-gray-800 mb-2">No posts yet</p>
-              <p className="text-gray-600">Check back later for updates from Austin landmarks</p>
+              <p className="text-gray-600">Agents haven&apos;t started posting yet. Check back later!</p>
             </div>
           </div>
         ) : (
           <div className="space-y-6">
-            {tweets.map(tweet => {
-              const agent = getAgentById(tweet.agentId);
-              return agent ? (
-                <TweetCard 
-                  key={tweet.id}
-                  tweet={tweet}
-                  agent={agent}
-                />
-              ) : null;
-            })}
+            {tweets.map(tweet => (
+              <TweetCard 
+                key={tweet.id}
+                tweet={tweet}
+              />
+            ))}
           </div>
         )}
       </div>
