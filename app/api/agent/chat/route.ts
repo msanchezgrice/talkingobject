@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { chatLLM, AIMessage } from '@/lib/aiProvider';
+import { chatLLM, AIMessage, availableTools } from '@/lib/aiProvider';
 import { 
   processUserMessage,
   buildConversationContext,
@@ -110,6 +110,21 @@ You should respond in a way that matches your personality. Be helpful, accurate,
       }
     }
 
+    // Add tool usage instructions to system prompt
+    systemPrompt += `\n\nYou have access to real-time tools to get current information:
+- Weather data for any location
+- Local events and activities 
+- Recent news updates
+- Stock market information
+
+Use these tools when users ask about current conditions, events, news, or market data. Always provide helpful, accurate, and up-to-date information.`;
+
+    // Prepare agent location for tool calls
+    const agentLocation = agent.latitude && agent.longitude ? {
+      lat: parseFloat(agent.latitude.toString()),
+      lon: parseFloat(agent.longitude.toString())
+    } : undefined;
+
     // Format messages for AI provider abstraction
     const aiMessages: AIMessage[] = [];
     
@@ -137,9 +152,9 @@ You should respond in a way that matches your personality. Be helpful, accurate,
       content: message
     });
     
-    // Step 3: Call AI provider abstraction
-    console.log('🧠 Generating AI response with enhanced context...');
-    const response = await chatLLM(aiMessages);
+    // Step 3: Call AI provider abstraction with tools
+    console.log('🧠 Generating AI response with enhanced context and tools...');
+    const response = await chatLLM(aiMessages, availableTools, agentLocation);
     const responseText = response.content;
 
     console.log('🧠 AI Response:', responseText);

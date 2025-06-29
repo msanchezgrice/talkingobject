@@ -3,11 +3,11 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const symbols = url.searchParams.get('symbols');
+    const symbols = url.searchParams.get('symbols') || url.searchParams.get('symbol');
     
     if (!symbols) {
       return NextResponse.json(
-        { error: 'Missing symbols parameter (comma-separated stock symbols)' },
+        { error: 'Missing symbol parameter (stock symbol like AAPL, TSLA)' },
         { status: 400 }
       );
     }
