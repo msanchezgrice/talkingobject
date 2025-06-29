@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 
@@ -22,14 +22,19 @@ interface ConversationResponse {
   hasMore: boolean;
 }
 
+interface Agent {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export default function ConversationHistoryPage() {
   const params = useParams();
-  const router = useRouter();
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { isLoaded, isSignedIn } = useUser();
   
   const agentId = params.id as string;
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
-  const [agent, setAgent] = useState<any>(null);
+  const [agent, setAgent] = useState<Agent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);

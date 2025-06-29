@@ -60,7 +60,7 @@ export default function FeedPage() {
   
   useEffect(() => {
     fetchTweets();
-  }, []);
+  }, [fetchTweets]);
 
   // Auto-refresh every 5 minutes for new tweets (only refresh top, not infinite scroll)
   useEffect(() => {
