@@ -43,7 +43,7 @@ export function generateUsernameFromEmail(email: string): string {
  */
 export async function isUsernameAvailable(username: string, excludeUserId?: string): Promise<boolean> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     
     let query = supabase
       .from('profiles')
@@ -74,7 +74,7 @@ export async function isUsernameAvailable(username: string, excludeUserId?: stri
 export const serverProfileQueries = {
   async getProfileByUserId(userId: string): Promise<DatabaseProfile | null> {
     try {
-      const supabase = createServerSupabaseClient();
+      const supabase = await createServerSupabaseClient();
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -98,7 +98,7 @@ export const serverProfileQueries = {
 
   async createProfile(profileData: CreateProfileData): Promise<DatabaseProfile | null> {
     try {
-      const supabase = createServerSupabaseClient();
+      const supabase = await createServerSupabaseClient();
       const { data, error } = await supabase
         .from('profiles')
         .insert({
@@ -124,7 +124,7 @@ export const serverProfileQueries = {
 
   async updateProfile(userId: string, profileData: UpdateProfileData): Promise<DatabaseProfile | null> {
     try {
-      const supabase = createServerSupabaseClient();
+      const supabase = await createServerSupabaseClient();
       const updateData = {
         ...profileData,
         updated_at: new Date().toISOString(),
