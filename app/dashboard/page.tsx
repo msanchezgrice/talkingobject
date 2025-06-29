@@ -168,18 +168,9 @@ function DashboardPageInner() {
             
             <div className="mt-8 text-center">
               <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-md inline-block">
-                <p className="text-gray-600 mb-2">
+                <p className="text-gray-600">
                   {agents.length} agent{agents.length !== 1 ? 's' : ''} created
                 </p>
-                <button 
-                  onClick={refreshAgents}
-                  className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 flex items-center mx-auto"
-                >
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Refresh
-                </button>
               </div>
             </div>
           </>

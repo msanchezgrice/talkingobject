@@ -46,6 +46,11 @@ export function AgentCard({ agent, onUpdate }: AgentCardProps) {
     };
 
     fetchAnalytics();
+    
+    // Auto-refresh analytics every 30 seconds
+    const interval = setInterval(fetchAnalytics, 30 * 1000);
+    
+    return () => clearInterval(interval);
   }, [agent.id]);
 
   const handleEditClick = () => {
