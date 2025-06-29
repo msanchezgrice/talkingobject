@@ -5,11 +5,12 @@ import { useState, useEffect } from "react";
 import { useUser } from '@clerk/nextjs';
 import { AgentCard } from "@/components/dashboard/AgentCard";
 import { getClerkUserAgents, ClerkDatabaseAgent } from "@/lib/database/clerk-agents";
+import nextDynamic from 'next/dynamic';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
-export default function DashboardPage() {
+function DashboardPageInner() {
   const { isLoaded, isSignedIn, user } = useUser();
   const [agents, setAgents] = useState<ClerkDatabaseAgent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -182,4 +183,25 @@ export default function DashboardPage() {
       </div>
     </div>
   );
+}
+
+// Dynamically import the dashboard to avoid SSR issues with Clerk
+const DynamicDashboardPage = nextDynamic(() => Promise.resolve(DashboardPageInner), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="relative">
+            <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
+            <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-r-purple-600 animate-spin animate-reverse"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  ),
+});
+
+export default function DashboardPage() {
+  return <DynamicDashboardPage />;
 } 
