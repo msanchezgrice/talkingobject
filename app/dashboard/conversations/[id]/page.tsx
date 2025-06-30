@@ -234,9 +234,12 @@ export default function ConversationHistoryPage() {
                   </div>
                   
                   <div className="flex gap-2">
-                    <button className="px-4 py-2 bg-blue-100/70 hover:bg-blue-200/70 text-blue-700 text-sm font-medium rounded-full transition-colors duration-200 border border-blue-200/50">
+                    <Link 
+                      href={`/dashboard/conversations/${agentId}/${conversation.conversationId}`}
+                      className="px-4 py-2 bg-blue-100/70 hover:bg-blue-200/70 text-blue-700 text-sm font-medium rounded-full transition-colors duration-200 border border-blue-200/50"
+                    >
                       View Details
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>
