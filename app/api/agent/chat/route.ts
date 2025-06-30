@@ -178,7 +178,53 @@ Use these tools when users ask about current conditions, events, news, or market
 
     console.log('🧠 AI Response:', responseText);
 
-    // Step 4: Store the AI response in conversation history
+    // Step 4: Store the conversation messages (both user and AI response)
+    try {
+      const supabase = await createServerSupabaseClient();
+      
+      // Store user message
+      console.log('💾 Storing user message...');
+      const { error: userMessageError } = await supabase
+        .from('conversation_messages')
+        .insert({
+          conversation_id: conversationId,
+          user_id: isAnonymousUser ? null : userId,
+          agent_id: agentId,
+          role: 'user',
+          content: message,
+          is_memory_worthy: memoryResult?.classification?.isMemoryWorthy || false
+        });
+
+      if (userMessageError) {
+        console.error('Error storing user message:', userMessageError);
+      } else {
+        console.log('✅ User message stored successfully');
+      }
+
+      // Store AI response
+      console.log('💾 Storing AI response...');
+      const { error: aiMessageError } = await supabase
+        .from('conversation_messages')
+        .insert({
+          conversation_id: conversationId,
+          user_id: isAnonymousUser ? null : userId,
+          agent_id: agentId,
+          role: 'assistant',
+          content: responseText,
+          is_memory_worthy: false // AI responses are typically not memory-worthy themselves
+        });
+
+      if (aiMessageError) {
+        console.error('Error storing AI response:', aiMessageError);
+      } else {
+        console.log('✅ AI response stored successfully');
+      }
+
+    } catch (storageError) {
+      console.error('Error storing conversation messages:', storageError);
+    }
+
+    // Legacy memory storage for non-anonymous users (keep for backward compatibility)
     if (!isAnonymousUser) {
       try {
         await storeConversationMessage(
@@ -187,13 +233,11 @@ Use these tools when users ask about current conditions, events, news, or market
           agentId,
           'assistant',
           responseText,
-          false // AI responses are typically not memory-worthy themselves
+          false
         );
       } catch (storageError) {
-        console.error('Error storing AI response (continuing):', storageError);
+        console.error('Error storing AI response in legacy system (continuing):', storageError);
       }
-    } else {
-      console.log('🧠 Skipping message storage for anonymous user');
     }
     
     // Step 5: Track analytics for this conversation
