@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
         payload,
         posted_at,
         twitter_id,
-        agents!inner(
+        agents(
           name,
           slug,
           image_url
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       .not('posted_at', 'is', null)
       .not('twitter_id', 'is', null);
 
-    // Add agent filter if specified
+    // Add agent filter if specified (only for tweets that have agents)
     if (agentSlug) {
       query = query.eq('agents.slug', agentSlug);
     }
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
 
     // Transform the data to include agent info
     const transformedTweets: DatabaseTweet[] = (tweets || []).map((tweet) => {
-      // Handle the case where agents might be an array or object
+      // Handle the case where agents might be an array, object, or null
       const agent = Array.isArray(tweet.agents) ? tweet.agents[0] : tweet.agents;
       return {
         id: tweet.id,
@@ -132,9 +132,9 @@ export async function GET(request: NextRequest) {
         payload: tweet.payload,
         posted_at: tweet.posted_at,
         twitter_id: tweet.twitter_id,
-        agent_name: agent?.name,
-        agent_slug: agent?.slug,
-        agent_image_url: agent?.image_url
+        agent_name: agent?.name || 'Unknown Agent',
+        agent_slug: agent?.slug || 'unknown',
+        agent_image_url: agent?.image_url || '/images/placeholder.jpg'
       };
     });
 
