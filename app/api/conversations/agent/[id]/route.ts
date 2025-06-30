@@ -50,7 +50,8 @@ export async function GET(
       return NextResponse.json({ error: 'Agent not found or unauthorized' }, { status: 404 });
     }
 
-    // Get conversation sessions for this agent
+    // Get ALL conversation sessions for this agent (including anonymous users)
+    // Since the user owns the agent, they can see all conversations with their agent
     const { data: sessions, error: sessionsError } = await supabase
       .from('conversation_sessions')
       .select(`
@@ -60,13 +61,18 @@ export async function GET(
         last_activity_at,
         message_count,
         summary,
-        is_active
+        is_active,
+        user_id
       `)
       .eq('agent_id', agentId)
       .order('last_activity_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
-    console.log('- Sessions query result:', { sessionsCount: sessions?.length, sessionsError });
+    console.log('- Sessions query result:', { 
+      sessionsCount: sessions?.length || 0, 
+      sessionsError,
+      sessionsData: sessions?.map(s => ({ id: s.id, user_id: s.user_id, message_count: s.message_count }))
+    });
 
     if (sessionsError) {
       console.error('Error fetching conversation sessions:', sessionsError);
