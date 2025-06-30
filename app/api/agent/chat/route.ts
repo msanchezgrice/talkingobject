@@ -23,8 +23,8 @@ export async function POST(request: Request) {
     }
     
     // Use the agent data directly from the request (PlaceholderAgent)
-    // For now, we'll use a placeholder user ID since PlaceholderAgents don't require auth
-    const userId = 'anonymous-user'; // TODO: Replace with actual user ID when auth is integrated
+    // For anonymous users, use a special UUID to avoid database type conflicts
+    const userId = '00000000-0000-0000-0000-000000000000'; // Anonymous user UUID
     const agentId = agent.id || agent.slug;
 
     console.log('💬 Processing text chat for agent:', agent.name);
@@ -41,37 +41,55 @@ export async function POST(request: Request) {
     let memoryResult = null;
     let conversationContext = null;
 
-    try {
-      // Process the user message for memory extraction
-      memoryResult = await processUserMessage(
-        userId,
-        agentId,
-        conversationId,
-        message,
-        agent.name
-      );
+    // Skip memory processing for anonymous users to avoid UUID conflicts
+    const isAnonymousUser = userId === '00000000-0000-0000-0000-000000000000';
+    
+    if (!isAnonymousUser) {
+      try {
+        // Process the user message for memory extraction
+        memoryResult = await processUserMessage(
+          userId,
+          agentId,
+          conversationId,
+          message,
+          agent.name
+        );
 
-      console.log('🧠 Memory classification:', memoryResult.classification);
-      if (memoryResult.extractedMemory) {
-        console.log('💾 Extracted memory:', memoryResult.extractedMemory.key, '=', memoryResult.extractedMemory.value);
+        console.log('🧠 Memory classification:', memoryResult.classification);
+        if (memoryResult.extractedMemory) {
+          console.log('💾 Extracted memory:', memoryResult.extractedMemory.key, '=', memoryResult.extractedMemory.value);
+        }
+
+        // Build conversation context with memories and summaries
+        conversationContext = await buildConversationContext(
+          userId,
+          agentId,
+          conversationId,
+          message
+        );
+
+        console.log('🧠 Context retrieved:');
+        console.log('  - Memories:', conversationContext.memories.length);
+        console.log('  - Summaries:', conversationContext.summaries.length);
+        console.log('  - Recent messages:', conversationContext.recentMessages.length);
+
+      } catch (memoryError) {
+        console.error('Memory processing error (continuing without memory):', memoryError);
+        // Continue without memory if there's an error
       }
-
-      // Build conversation context with memories and summaries
-      conversationContext = await buildConversationContext(
-        userId,
-        agentId,
-        conversationId,
-        message
-      );
-
-      console.log('🧠 Context retrieved:');
-      console.log('  - Memories:', conversationContext.memories.length);
-      console.log('  - Summaries:', conversationContext.summaries.length);
-      console.log('  - Recent messages:', conversationContext.recentMessages.length);
-
-    } catch (memoryError) {
-      console.error('Memory processing error (continuing without memory):', memoryError);
-      // Continue without memory if there's an error
+    } else {
+      console.log('🧠 Skipping memory processing for anonymous user');
+      // Set default values for anonymous users
+      memoryResult = {
+        storedMessage: null,
+        extractedMemory: null,
+        classification: { isMemoryWorthy: false }
+      };
+      conversationContext = {
+        memories: [],
+        summaries: [],
+        recentMessages: []
+      };
     }
     
     // Skip external data for now since we're using placeholder agents
@@ -161,73 +179,77 @@ Use these tools when users ask about current conditions, events, news, or market
     console.log('🧠 AI Response:', responseText);
 
     // Step 4: Store the AI response in conversation history
-    try {
-      await storeConversationMessage(
-        conversationId,
-        userId,
-        agentId,
-        'assistant',
-        responseText,
-        false // AI responses are typically not memory-worthy themselves
-      );
-
-      // Step 5: Track analytics for this conversation
+    if (!isAnonymousUser) {
       try {
-        const supabase = await createServerSupabaseClient();
-        
-        // Try using the database function first
-        try {
-          await supabase.rpc('track_conversation_session', {
-            p_conversation_id: conversationId,
-            p_agent_id: agentId,
-            p_user_id: null // Anonymous user
-          });
-          console.log('📊 Analytics tracked via function for conversation:', conversationId);
-        } catch (functionError) {
-          console.log('Function not available, using manual tracking:', functionError);
-          
-          // Fallback: Manual tracking
-          const { data: existingSession, error: sessionError } = await supabase
-            .from('conversation_sessions')
-            .select('id, message_count')
-            .eq('conversation_id', conversationId)
-            .eq('agent_id', agentId)
-            .single();
-
-          if (sessionError && sessionError.code !== 'PGRST116') {
-            // Error other than "not found"
-            console.error('Error checking conversation session:', sessionError);
-          } else if (existingSession) {
-            // Update existing session
-            await supabase
-              .from('conversation_sessions')
-              .update({
-                last_activity_at: new Date().toISOString(),
-                message_count: (existingSession.message_count || 0) + 2, // +2 for user message + AI response
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', existingSession.id);
-          } else {
-            // Create new session (without user_id since it's anonymous)
-            await supabase
-              .from('conversation_sessions')
-              .insert({
-                conversation_id: conversationId,
-                agent_id: agentId,
-                user_id: null, // Anonymous user
-                message_count: 2, // User message + AI response
-                started_at: new Date().toISOString(),
-                last_activity_at: new Date().toISOString(),
-                is_active: true
-              });
-          }
-          console.log('📊 Analytics tracked manually for conversation:', conversationId);
-        }
-      } catch (analyticsError) {
-        console.error('Error tracking analytics (continuing):', analyticsError);
+        await storeConversationMessage(
+          conversationId,
+          userId,
+          agentId,
+          'assistant',
+          responseText,
+          false // AI responses are typically not memory-worthy themselves
+        );
+      } catch (storageError) {
+        console.error('Error storing AI response (continuing):', storageError);
       }
-    } catch (storageError) {
-      console.error('Error storing AI response (continuing):', storageError);
+    } else {
+      console.log('🧠 Skipping message storage for anonymous user');
+    }
+    
+    // Step 5: Track analytics for this conversation
+    try {
+      const supabase = await createServerSupabaseClient();
+      
+      // Try using the database function first
+      try {
+        await supabase.rpc('track_conversation_session', {
+          p_conversation_id: conversationId,
+          p_agent_id: agentId,
+          p_user_id: null // Anonymous user - use null in the database function
+        });
+        console.log('📊 Analytics tracked via function for conversation:', conversationId);
+      } catch (functionError) {
+        console.log('Function not available, using manual tracking:', functionError);
+        
+        // Fallback: Manual tracking
+        const { data: existingSession, error: sessionError } = await supabase
+          .from('conversation_sessions')
+          .select('id, message_count')
+          .eq('conversation_id', conversationId)
+          .eq('agent_id', agentId)
+          .single();
+
+        if (sessionError && sessionError.code !== 'PGRST116') {
+          // Error other than "not found"
+          console.error('Error checking conversation session:', sessionError);
+        } else if (existingSession) {
+          // Update existing session
+          await supabase
+            .from('conversation_sessions')
+            .update({
+              last_activity_at: new Date().toISOString(),
+              message_count: (existingSession.message_count || 0) + 2, // +2 for user message + AI response
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingSession.id);
+        } else {
+          // Create new session (without user_id since it's anonymous)
+          await supabase
+            .from('conversation_sessions')
+            .insert({
+              conversation_id: conversationId,
+              agent_id: agentId,
+              user_id: null, // Anonymous user
+              message_count: 2, // User message + AI response
+              started_at: new Date().toISOString(),
+              last_activity_at: new Date().toISOString(),
+              is_active: true
+            });
+        }
+        console.log('📊 Analytics tracked manually for conversation:', conversationId);
+      }
+    } catch (analyticsError) {
+      console.error('Error tracking analytics (continuing):', analyticsError);
     }
     
     return NextResponse.json({ 
