@@ -18,7 +18,14 @@ export interface ConversationSummary {
   userPreview: string; // First few words from user
 }
 
-async function generateConversationPreview(messages: any[]): Promise<string> {
+interface ConversationMessage {
+  role: string;
+  content: string;
+  created_at: string;
+  conversation_id: string;
+}
+
+async function generateConversationPreview(messages: ConversationMessage[]): Promise<string> {
   if (!messages || messages.length === 0) {
     return 'No messages in this conversation';
   }
@@ -134,12 +141,12 @@ export async function GET(
     }
 
     // Group messages by conversation_id
-    const messagesByConversation = new Map();
+    const messagesByConversation = new Map<string, ConversationMessage[]>();
     (messages || []).forEach(msg => {
       if (!messagesByConversation.has(msg.conversation_id)) {
         messagesByConversation.set(msg.conversation_id, []);
       }
-      messagesByConversation.get(msg.conversation_id).push(msg);
+      messagesByConversation.get(msg.conversation_id)?.push(msg);
     });
 
     // Generate previews for each conversation
