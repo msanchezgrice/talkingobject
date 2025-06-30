@@ -200,18 +200,33 @@ Use these tools when users ask about current conditions, events, news, or market
     try {
       const supabase = await createServerSupabaseClient();
       
+      console.log('📊 Starting analytics tracking...');
+      console.log('📊 Conversation ID:', conversationId);
+      console.log('📊 Agent ID:', agentId);
+      console.log('📊 Agent ID type:', typeof agentId);
+      
       // Try using the database function first
       try {
-        await supabase.rpc('track_conversation_session', {
+        const result = await supabase.rpc('track_conversation_session', {
           p_conversation_id: conversationId,
           p_agent_id: agentId,
           p_user_id: null // Anonymous user - use null in the database function
         });
+        
+        console.log('📊 Function call result:', result);
+        
+        if (result.error) {
+          console.error('📊 Function call error:', result.error);
+          throw result.error;
+        }
+        
         console.log('📊 Analytics tracked via function for conversation:', conversationId);
       } catch (functionError) {
-        console.log('Function not available, using manual tracking:', functionError);
+        console.log('📊 Function not available, using manual tracking:', functionError);
         
         // Fallback: Manual tracking
+        console.log('📊 Attempting manual session tracking...');
+        
         const { data: existingSession, error: sessionError } = await supabase
           .from('conversation_sessions')
           .select('id, message_count')
@@ -219,22 +234,29 @@ Use these tools when users ask about current conditions, events, news, or market
           .eq('agent_id', agentId)
           .single();
 
+        console.log('📊 Existing session check:', { existingSession, sessionError });
+
         if (sessionError && sessionError.code !== 'PGRST116') {
           // Error other than "not found"
-          console.error('Error checking conversation session:', sessionError);
+          console.error('📊 Error checking conversation session:', sessionError);
         } else if (existingSession) {
           // Update existing session
-          await supabase
+          console.log('📊 Updating existing session:', existingSession.id);
+          const { data: updateResult, error: updateError } = await supabase
             .from('conversation_sessions')
             .update({
               last_activity_at: new Date().toISOString(),
               message_count: (existingSession.message_count || 0) + 2, // +2 for user message + AI response
               updated_at: new Date().toISOString()
             })
-            .eq('id', existingSession.id);
+            .eq('id', existingSession.id)
+            .select();
+            
+          console.log('📊 Update result:', { updateResult, updateError });
         } else {
           // Create new session (without user_id since it's anonymous)
-          await supabase
+          console.log('📊 Creating new session...');
+          const { data: insertResult, error: insertError } = await supabase
             .from('conversation_sessions')
             .insert({
               conversation_id: conversationId,
@@ -244,12 +266,21 @@ Use these tools when users ask about current conditions, events, news, or market
               started_at: new Date().toISOString(),
               last_activity_at: new Date().toISOString(),
               is_active: true
-            });
+            })
+            .select();
+            
+          console.log('📊 Insert result:', { insertResult, insertError });
+          
+          if (insertError) {
+            console.error('📊 Error creating session:', insertError);
+          } else {
+            console.log('📊 Session created successfully:', insertResult);
+          }
         }
         console.log('📊 Analytics tracked manually for conversation:', conversationId);
       }
     } catch (analyticsError) {
-      console.error('Error tracking analytics (continuing):', analyticsError);
+      console.error('📊 Error tracking analytics (continuing):', analyticsError);
     }
     
     return NextResponse.json({ 
