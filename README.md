@@ -115,8 +115,8 @@ This project uses Supabase for authentication and database services. Follow thes
 ## Supabase Configuration
 
 We're using the following Supabase instance:
-- **URL**: https://wwjzkoledvsgkgvfpfqz.supabase.co
-- **Anon Key**: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3anprb2xlZHZzZ2tndmZwZnF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1NDgwNjQsImV4cCI6MjA1NjEyNDA2NH0.6__7ruThjutDHS2q2hPkGyfKtBw-G_zPG9F9mpx42EU
+- **URL**: your_supabase_url
+- **Anon Key**: your_supabase_anon_key
 
 ## Setup Instructions
 
