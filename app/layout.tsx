@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import Script from "next/script";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import TweetInitializer from "@/components/feed/TweetInitializer";
@@ -78,6 +79,7 @@ export default function RootLayout({
           </main>
           <Footer />
         </div>
+        <Script src="/posthog.js" strategy="afterInteractive" />
       </body>
     </html>
   );
